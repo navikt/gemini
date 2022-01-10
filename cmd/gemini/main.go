@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"time"
 
 	log "github.com/sirupsen/logrus"
 	"golang.org/x/oauth2"
@@ -16,6 +17,7 @@ import (
 type odata interface{}
 
 type Result struct {
+	Next  string `json:"@odata.nextLink"`
 	Value []Event
 }
 
@@ -110,12 +112,43 @@ func (c *callbackHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func getallevents(client *http.Client) ([]Event, error) {
+	uri := "https://graph.microsoft.com/v1.0/me/calendar/events?$top=100"
+	resultset := make([]Event, 0, 8192)
+
+	for len(uri) > 0 {
+		log.Infof("Fetching events from %s", uri)
+
+		resp, err := client.Get(uri)
+		if err != nil {
+			return nil, err
+		}
+
+		//goland:noinspection ALL
+		defer resp.Body.Close()
+
+		payload := &Result{}
+		err = json.NewDecoder(resp.Body).Decode(payload)
+		if err != nil {
+			return nil, err
+		}
+
+		resultset = append(resultset, payload.Value...)
+
+		uri = payload.Next
+	}
+
+	return resultset, nil
+}
+
 func run() error {
 	var token *oauth2.Token
 	var err error
 
 	log.SetOutput(os.Stderr)
-	ctx := context.Background()
+
+	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
+	defer cancel()
 
 	tok, err := ioutil.ReadFile("/tmp/gemini.token")
 
@@ -137,22 +170,17 @@ func run() error {
 
 	log.Info("Microsoft Graph API client instantiated")
 
-	resp, err := client.Get("https://graph.microsoft.com/v1.0/me/calendar/events?$top=100")
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
+	log.Info("Fetching events...")
+	t := time.Now()
+	evs, err := getallevents(client)
 
-	//io.Copy(os.Stdout, resp.Body)
-	//return nil
-
-	payload := &Result{}
-	err = json.NewDecoder(resp.Body).Decode(payload)
 	if err != nil {
 		return err
 	}
 
-	for _, ev := range payload.Value {
+	log.Infof("Got %d events in %s", len(evs), time.Since(t))
+
+	for _, ev := range evs {
 		log.Infof("%s: %s", ev.Start.DateTime, ev.Subject)
 	}
 
