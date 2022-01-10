@@ -6,6 +6,8 @@ require (
 	github.com/Azure/azure-sdk-for-go/sdk/azcore v0.20.0 // indirect
 	github.com/Azure/azure-sdk-for-go/sdk/azidentity v0.12.0 // indirect
 	github.com/Azure/azure-sdk-for-go/sdk/internal v0.8.2 // indirect
+	github.com/arran4/golang-ical v0.0.0-20211212012649-32b67e209c4f // indirect
+	github.com/emersion/go-ical v0.0.0-20211103111159-f16f27911f39 // indirect
 	github.com/golang/protobuf v1.4.2 // indirect
 	github.com/google/uuid v1.3.0 // indirect
 	github.com/microsoft/kiota/abstractions/go v0.0.0-20211202082735-099f3c37853a // indirect
@@ -16,6 +18,7 @@ require (
 	github.com/microsoftgraph/msgraph-sdk-go-core v0.0.5 // indirect
 	github.com/pkg/browser v0.0.0-20180916011732-0a3d74bf9ce4 // indirect
 	github.com/sirupsen/logrus v1.8.1 // indirect
+	github.com/teambition/rrule-go v1.7.2 // indirect
 	github.com/yosida95/uritemplate/v3 v3.0.1 // indirect
 	golang.org/x/crypto v0.0.0-20201016220609-9e8e0b390897 // indirect
 	golang.org/x/net v0.0.0-20211123203042-d83791d6bcd9 // indirect

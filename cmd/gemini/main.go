@@ -9,75 +9,12 @@ import (
 	"os"
 	"time"
 
+	"github.com/ambientsound/gemini/pkg/azure"
+	"github.com/ambientsound/gemini/pkg/calserv"
 	log "github.com/sirupsen/logrus"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/endpoints"
 )
-
-type odata interface{}
-
-type Result struct {
-	Next  string `json:"@odata.nextLink"`
-	Value []Event
-}
-
-type MicrosoftTime struct {
-	DateTime string
-	TimeZone string
-}
-
-type Event struct {
-	AllowNewTimeProposals         bool
-	Attendees                     []odata       //": [{"@odata.type": "microsoft.graph.attendee"}],
-	Body                          odata         //": {"@odata.type": "microsoft.graph.itemBody"},
-	BodyPreview                   string        //": "string",
-	Categories                    []string      //": ["string"],
-	ChangeKey                     string        //": "string",
-	CreatedDateTime               string        //": "String (timestamp)",
-	End                           MicrosoftTime //": {"@odata.type": "microsoft.graph.dateTimeTimeZone"},
-	HasAttachments                bool          //": true,
-	HideAttendees                 bool          //": false,
-	Id                            string        //": "string (identifier)",
-	Importance                    string        //": "String",
-	IsAllDay                      bool          //": true,
-	IsCancelled                   bool          //": true,
-	IsDraft                       bool          //": false,
-	IsOnlineMeeting               bool          //": true,
-	IsOrganizer                   bool          //": true,
-	IsReminderOn                  bool          //": true,
-	LastModifiedDateTime          string        //": "String (timestamp)",
-	Location                      odata         //": {"@odata.type": "microsoft.graph.location"},
-	Locations                     []odata       //": [{"@odata.type": "microsoft.graph.location"}],
-	OnlineMeeting                 odata         //": {"@odata.type": "microsoft.graph.onlineMeetingInfo"},
-	OnlineMeetingProvider         string        //": "string",
-	OnlineMeetingUrl              string        //": "string",
-	Organizer                     odata         //": {"@odata.type": "microsoft.graph.recipient"},
-	OriginalEndTimeZone           string        //": "string",
-	OriginalStart                 string        //": "String (timestamp)",
-	OriginalStartTimeZone         string        //": "string",
-	Recurrence                    odata         //": {"@odata.type": "microsoft.graph.patternedRecurrence"},
-	ReminderMinutesBeforeStart    int           //": 1024,
-	ResponseRequested             bool          //": true,
-	ResponseStatus                odata         //": {"@odata.type": "microsoft.graph.responseStatus"},
-	Sensitivity                   string        //": "String",
-	SeriesMasterId                string        //": "string",
-	ShowAs                        string        //": "String",
-	Start                         MicrosoftTime //": {"@odata.type": "microsoft.graph.dateTimeTimeZone"},
-	Subject                       string        //": "string",
-	Type                          string        //": "String",
-	WebLink                       string        //": "string",
-	Attachments                   []odata       //[ { "@odata.type": "microsoft.graph.attachment" } ],
-	Calendar                      odata         //": { "@odata.type": "microsoft.graph.calendar" },
-	Extensions                    []odata       //": [ { "@odata.type": "microsoft.graph.extension" } ],
-	Instances                     []odata       //": [ { "@odata.type": "microsoft.graph.event" }],
-	SingleValueExtendedProperties []odata       //": [ { "@odata.type": "microsoft.graph.singleValueLegacyExtendedProperty" }],
-	MultiValueExtendedProperties  []odata       //": [ { "@odata.type": "microsoft.graph.multiValueLegacyExtendedProperty" }]
-}
-
-// start, end (string datetime)
-// type, recurrence
-// subject
-// location.displayName
 
 func main() {
 	err := run()
@@ -112,9 +49,15 @@ func (c *callbackHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func getallevents(client *http.Client) ([]Event, error) {
+func getallevents(client *http.Client) ([]azure.Event, error) {
+	var events []azure.Event
+
+	log.Info("Loading events...")
+	t := time.Now()
+	defer log.Infof("Got %d events in %s", len(events), time.Since(t))
+
 	uri := "https://graph.microsoft.com/v1.0/me/calendar/events?$top=100"
-	resultset := make([]Event, 0, 8192)
+	resultset := make([]azure.Event, 0, 8192)
 
 	for len(uri) > 0 {
 		log.Infof("Fetching events from %s", uri)
@@ -127,7 +70,7 @@ func getallevents(client *http.Client) ([]Event, error) {
 		//goland:noinspection ALL
 		defer resp.Body.Close()
 
-		payload := &Result{}
+		payload := &azure.Result{}
 		err = json.NewDecoder(resp.Body).Decode(payload)
 		if err != nil {
 			return nil, err
@@ -141,14 +84,19 @@ func getallevents(client *http.Client) ([]Event, error) {
 	return resultset, nil
 }
 
-func run() error {
+func synccalendar(ctx context.Context) ([]azure.Event, error) {
 	var token *oauth2.Token
 	var err error
+	var events []azure.Event
 
-	log.SetOutput(os.Stderr)
-
-	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
-	defer cancel()
+	evdata, err := ioutil.ReadFile("/tmp/gemini.events")
+	if err == nil {
+		events = make([]azure.Event, 0)
+		err = json.Unmarshal(evdata, &events)
+		if err == nil {
+			return events, nil
+		}
+	}
 
 	tok, err := ioutil.ReadFile("/tmp/gemini.token")
 
@@ -160,7 +108,7 @@ func run() error {
 	if err != nil {
 		token, err = authtoken(ctx)
 		if err != nil {
-			return fmt.Errorf("auth: %w", err)
+			return nil, fmt.Errorf("auth: %w", err)
 		}
 		data, _ := json.Marshal(token)
 		ioutil.WriteFile("/tmp/gemini.token", data, 0600)
@@ -170,21 +118,39 @@ func run() error {
 
 	log.Info("Microsoft Graph API client instantiated")
 
-	log.Info("Fetching events...")
-	t := time.Now()
-	evs, err := getallevents(client)
+	events, err = getallevents(client)
 
+	if err != nil {
+		return nil, err
+	}
+
+	data, _ := json.Marshal(events)
+	ioutil.WriteFile("/tmp/gemini.events", data, 0600)
+
+	return events, err
+}
+
+func run() error {
+	log.SetOutput(os.Stderr)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
+	defer cancel()
+
+	events, err := synccalendar(ctx)
 	if err != nil {
 		return err
 	}
 
-	log.Infof("Got %d events in %s", len(evs), time.Since(t))
-
-	for _, ev := range evs {
+	for _, ev := range events {
 		log.Infof("%s: %s", ev.Start.DateTime, ev.Subject)
 	}
 
-	return nil
+	srv := &calserv.Server{
+		Events: events,
+	}
+	calserv.Calendar(events)
+
+	return http.ListenAndServe("127.0.0.1:9999", srv)
 }
 
 func authtoken(ctx context.Context) (*oauth2.Token, error) {
