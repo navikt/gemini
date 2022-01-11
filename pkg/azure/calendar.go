@@ -13,7 +13,6 @@ type Result struct {
 
 type Events []Event
 
-// https://docs.microsoft.com/en-us/graph/api/calendar-list-events?view=graph-rest-1.0&tabs=http
 type Event struct {
 	AllowNewTimeProposals         bool
 	Attendees                     []odata              //": [{"@odata.type": "microsoft.graph.attendee"}],

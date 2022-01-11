@@ -19,7 +19,7 @@ import (
 func main() {
 	err := run()
 	if err != nil {
-		fmt.Printf("fatal: %s\n", err)
+		log.Errorf("fatal: %s\n", err)
 		os.Exit(1)
 	}
 }
@@ -69,6 +69,11 @@ func getallevents(client *http.Client) ([]azure.Event, error) {
 
 		//goland:noinspection ALL
 		defer resp.Body.Close()
+
+		if resp.StatusCode != http.StatusOK {
+			body, _ := ioutil.ReadAll(resp.Body)
+			return nil, fmt.Errorf("API returned %s: %s", resp.Status, body)
+		}
 
 		payload := &azure.Result{}
 		err = json.NewDecoder(resp.Body).Decode(payload)
@@ -132,24 +137,24 @@ func synccalendar(ctx context.Context) ([]azure.Event, error) {
 
 func run() error {
 	log.SetOutput(os.Stderr)
+	log.Infof("GEMINI starting up - Office365 to iCal")
 
 	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 	defer cancel()
 
+	log.Infof("Synchronizing calendar from Azure...")
 	events, err := synccalendar(ctx)
 	if err != nil {
 		return err
 	}
 
-	for _, ev := range events {
-		log.Infof("%s: %s", ev.Start.DateTime, ev.Subject)
-	}
+	log.Infof("Loaded %d events from Azure", len(events))
+	cal := calserv.Calendar(events)
 
-	srv := &calserv.Server{
-		Events: events,
-	}
-	calserv.Calendar(events)
+	srv := &calserv.Server{}
+	srv.SetCalendar(cal)
 
+	log.Infof("Web server started, ready to receive requests.")
 	return http.ListenAndServe("127.0.0.1:9999", srv)
 }
 
