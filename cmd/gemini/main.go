@@ -47,6 +47,7 @@ func (c *callbackHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		state: q.Get("state"),
 		err:   err,
 	}
+	w.Write([]byte(`Authentication ok, you can close this window now.`))
 }
 
 func getallevents(client *http.Client) ([]azure.Event, error) {
