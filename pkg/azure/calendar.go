@@ -1,5 +1,15 @@
 package azure
 
+import (
+	"encoding/json"
+	"fmt"
+	"io/ioutil"
+	"net/http"
+	"time"
+
+	log "github.com/sirupsen/logrus"
+)
+
 type odata interface{}
 
 type Location struct {
@@ -61,7 +71,42 @@ type Event struct {
 	MultiValueExtendedProperties  []odata              //": [ { "@odata.type": "microsoft.graph.multiValueLegacyExtendedProperty" }]
 }
 
-// start, end (string datetime)
-// type, recurrence
-// subject
-// location.displayName
+func GetCalendarEvents(client *http.Client) ([]Event, error) {
+	var events []Event
+
+	t := time.Now()
+
+	uri := "https://graph.microsoft.com/v1.0/me/calendar/events?$top=100"
+	resultset := make([]Event, 0, 8192)
+
+	for len(uri) > 0 {
+		log.Infof("Fetching events from %s", uri)
+
+		resp, err := client.Get(uri)
+		if err != nil {
+			return nil, err
+		}
+
+		//goland:noinspection ALL
+		defer resp.Body.Close()
+
+		if resp.StatusCode != http.StatusOK {
+			body, _ := ioutil.ReadAll(resp.Body)
+			return nil, fmt.Errorf("API returned %s: %s", resp.Status, body)
+		}
+
+		payload := &Result{}
+		err = json.NewDecoder(resp.Body).Decode(payload)
+		if err != nil {
+			return nil, err
+		}
+
+		resultset = append(resultset, payload.Value...)
+
+		uri = payload.Next
+	}
+
+	defer log.Infof("Got %d events in %s", len(events), time.Since(t))
+
+	return resultset, nil
+}

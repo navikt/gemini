@@ -1,27 +1,110 @@
 package calserv
 
 import (
+	"fmt"
 	"net/http"
+	"strconv"
 
-	ics "github.com/arran4/golang-ical"
+	"github.com/ambientsound/gemini/pkg/db"
+	"github.com/go-chi/chi"
+	"github.com/lestrrat-go/jwx/jwt"
+	log "github.com/sirupsen/logrus"
 )
 
 type Server struct {
-	calendar *ics.Calendar
+	calendars map[db.ID]*CalendarCache
+	database  db.Database
+	store     Store
 }
 
-func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	//payload := []byte(s.calendar.Serialize())
-	//w.Header().Set("Content-Length", strconv.Itoa(len(payload)))
+func NewServer(database db.Database, store Store) *Server {
+	return &Server{
+		calendars: make(map[db.ID]*CalendarCache),
+		database:  database,
+		store:     store,
+	}
+}
+
+func (s *Server) Index(w http.ResponseWriter, r *http.Request) {
+	tok, ok := r.Context().Value("token").(string)
+	if !ok || len(tok) == 0 {
+		log.Errorf("BUG: index handler called, but no token provided")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	claims, ok := r.Context().Value("claims").(jwt.Token)
+	if !ok || claims == nil {
+		log.Errorf("BUG: index handler called, but no claims provided")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	upn, _ := claims.Get("upn")
+	upnString, ok := upn.(string)
+	if len(upnString) == 0 {
+		log.Errorf("access token does not have the 'upn' claim")
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	userID, err := s.database.Lookup(r.Context(), upnString)
+	if err != nil {
+		userID, err = db.NewID()
+		if err != nil {
+			log.Errorf("unable to generate new ID for user")
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte("internal error, please try again later"))
+			return
+		}
+		user := &db.User{
+			ID:       userID,
+			Username: upnString,
+			Token:    tok,
+		}
+		err = s.database.WriteUser(r.Context(), user)
+		if err != nil {
+			log.Errorf("unable to store user in database")
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte("internal error, please try again later"))
+			return
+		}
+	}
+
+	// register user ID with calendar async fetcher
+	s.store.Add(userID)
+
+	w.Header().Set("content-type", "text/html")
+	fmt.Fprintf(w, `Please copy your <a href="/calendar/%s">personal calendar link</a> and subscribe to it in your calendar application.`, userID)
+}
+
+func (s *Server) SetCalendar(userid db.ID, calendar *CalendarCache) {
+	s.calendars[userid] = calendar
+}
+
+func (s *Server) Calendar(w http.ResponseWriter, r *http.Request) {
+	userID := db.ID(chi.URLParam(r, "userid"))
+
+	cache := s.store.Get(userID)
+
+	if cache == nil {
+		w.WriteHeader(http.StatusNotFound)
+		fmt.Fprintf(w, "Calendar does not exist. Please go to the index page and get your personal calendar URL.")
+		return
+	}
+
+	if cache.err != nil {
+		log.Error(cache.err)
+		w.WriteHeader(http.StatusServiceUnavailable)
+		fmt.Fprintf(w, "calendar is unavailable: %s", cache.err)
+		return
+	}
+
+	payload := []byte(cache.calendar.Serialize())
+	w.Header().Set("Content-Length", strconv.Itoa(len(payload)))
 	w.Header().Set("Content-Type", "text/calendar")
 	w.Header().Set("Cache-Control", "no-cache")
 	w.WriteHeader(http.StatusOK)
-	s.calendar.SerializeTo(w)
-	//w.Write(payload)
-}
 
-func (s *Server) SetCalendar(cal *ics.Calendar) {
-	s.calendar = cal
+	w.Write(payload)
 }
-
-var _ http.Handler = &Server{}
