@@ -72,15 +72,13 @@ type Event struct {
 }
 
 func GetCalendarEvents(client *http.Client) ([]Event, error) {
-	var events []Event
-
 	t := time.Now()
 
 	uri := "https://graph.microsoft.com/v1.0/me/calendar/events?$top=100"
 	resultset := make([]Event, 0, 8192)
 
 	for len(uri) > 0 {
-		log.Infof("Fetching events from %s", uri)
+		log.Debugf("Fetching events from %s", uri)
 
 		resp, err := client.Get(uri)
 		if err != nil {
@@ -106,7 +104,7 @@ func GetCalendarEvents(client *http.Client) ([]Event, error) {
 		uri = payload.Next
 	}
 
-	defer log.Infof("Got %d events in %s", len(events), time.Since(t))
+	defer log.Debugf("Fetched %d events in %s", len(resultset), time.Since(t))
 
 	return resultset, nil
 }

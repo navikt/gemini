@@ -125,6 +125,9 @@ func (f *store) fetch(userid db.ID) {
 func (f *store) Add(userid db.ID) {
 	f.lock.Lock()
 	defer f.lock.Unlock()
+	if f.cache[userid] != nil {
+		return
+	}
 	f.cache[userid] = &CalendarCache{
 		userID:   userid,
 		err:      fmt.Errorf("not yet synchronized"),

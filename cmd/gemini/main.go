@@ -29,6 +29,7 @@ const syncInterval = time.Minute
 const lifetime = time.Hour
 
 func run() error {
+	log.SetLevel(log.TraceLevel)
 	log.Infof("GEMINI starting up - Office365 to iCal")
 
 	ctx, cancel := context.WithCancel(context.Background())
