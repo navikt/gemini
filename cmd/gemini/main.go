@@ -2,18 +2,19 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 	"os"
 	"os/signal"
 	"time"
 
-	"github.com/ambientsound/gemini/pkg/azure"
+	"github.com/ambientsound/gemini/pkg/authserv"
 	"github.com/ambientsound/gemini/pkg/calserv"
 	"github.com/ambientsound/gemini/pkg/db"
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
 	log "github.com/sirupsen/logrus"
+	"golang.org/x/oauth2"
+	"golang.org/x/oauth2/microsoft"
 )
 
 func main() {
@@ -24,7 +25,6 @@ func main() {
 	}
 }
 
-const audience = "00000003-0000-0000-c000-000000000000"
 const syncInterval = time.Minute
 const lifetime = time.Hour
 
@@ -38,14 +38,29 @@ func run() error {
 	sigs := make(chan os.Signal, 1)
 	signal.Notify(sigs, os.Interrupt)
 
+	clientid := os.Getenv("CLIENT_ID")
+	iss := os.Getenv("ISSUER")
+
+	oauthconf := &oauth2.Config{
+		ClientID:     clientid,
+		ClientSecret: os.Getenv("CLIENT_SECRET"),
+		Endpoint:     microsoft.AzureADEndpoint(os.Getenv("TENANT_ID")),
+		RedirectURL:  "http://localhost:3000/oauth2/callback",
+		Scopes: []string{
+			"Calendars.Read",
+			"offline_access",
+		},
+	}
+
 	database := db.NewInMemoryDatabase()
 	store := calserv.NewStore(ctx, database, syncInterval, lifetime)
-	validator := azure.TokenValidatorMiddleware(audience)
+	validator := authserv.SessionIDMiddleware(database)
 	srv := calserv.NewServer(database, store)
-	router := setupRouter(srv, validator)
+	auth := authserv.NewServer(oauthconf, iss, clientid, database)
+	router := setupRouter(srv, auth, validator)
 
 	go func() {
-		err := http.ListenAndServe("0.0.0.0:8080", router)
+		err := http.ListenAndServe("127.0.0.1:3000", router)
 		log.Errorf("http server has stopped: %s", err)
 		cancel()
 	}()
@@ -64,19 +79,16 @@ func run() error {
 	return nil
 }
 
-func setupRouter(srv *calserv.Server, validator func(http.Handler) http.Handler) chi.Router {
+func setupRouter(srv *calserv.Server, auth *authserv.Server, validator func(http.Handler) http.Handler) chi.Router {
 	r := chi.NewRouter()
 
 	r.Use(middleware.Logger)
 
-	r.HandleFunc("/oauth2", func(w http.ResponseWriter, r *http.Request) {
-		//goland:noinspection GoErrorStringFormat
-		err := fmt.Errorf("oauth2 authentication not implemented in GEMINI; please run this program with the Wonderwall proxy in front.")
-		w.WriteHeader(http.StatusNotImplemented)
-		w.Write([]byte(err.Error()))
+	r.Route("/oauth2", func(r chi.Router) {
+		r.HandleFunc("/login", auth.Login)
+		r.HandleFunc("/callback", auth.Callback)
 	})
 
-	//r.With(validator).HandleFunc("/",srv.Index)
 	r.Route("/", func(r chi.Router) {
 		r.Use(validator)
 		r.HandleFunc("/", srv.Index)

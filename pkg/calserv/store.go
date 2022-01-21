@@ -27,6 +27,7 @@ type store struct {
 	ticker   *time.Ticker
 	interval time.Duration
 	lifetime time.Duration
+	oauth    *oauth2.Config
 }
 
 type CalendarCache struct {
@@ -95,11 +96,10 @@ func (f *store) fetch(userid db.ID) {
 		return
 	}
 
-	token := &oauth2.Token{
-		AccessToken: user.Token,
-	}
-
-	client := oauth2.NewClient(ctx, oauth2.StaticTokenSource(token))
+	// Auto-refreshes token when needed
+	oldAccessToken := user.Token.AccessToken
+	src := f.oauth.TokenSource(ctx, user.Token)
+	client := oauth2.NewClient(ctx, src)
 
 	events, err := azure.GetCalendarEvents(client)
 	if err != nil {
@@ -107,6 +107,21 @@ func (f *store) fetch(userid db.ID) {
 		f.cache[userid].lastSync = time.Now()
 		f.cache[userid].nextSync = time.Now().Add(5 * time.Minute)
 		return
+	}
+
+	user.Token, err = src.Token()
+	if oldAccessToken != user.Token.AccessToken {
+		log.Infof("Token for user '%s' has been refreshed", user.Username)
+	}
+	if err == nil {
+		err = f.database.WriteUser(ctx, user)
+		if err != nil {
+			err = fmt.Errorf("could not write updated token to database: %w", err)
+		}
+	}
+
+	if err != nil {
+		log.Error(err)
 	}
 
 	now := time.Now()

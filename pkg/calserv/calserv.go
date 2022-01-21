@@ -7,7 +7,6 @@ import (
 
 	"github.com/ambientsound/gemini/pkg/db"
 	"github.com/go-chi/chi"
-	"github.com/lestrrat-go/jwx/jwt"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -26,56 +25,18 @@ func NewServer(database db.Database, store Store) *Server {
 }
 
 func (s *Server) Index(w http.ResponseWriter, r *http.Request) {
-	tok, ok := r.Context().Value("token").(string)
-	if !ok || len(tok) == 0 {
-		log.Errorf("BUG: index handler called, but no token provided")
+	user, ok := r.Context().Value("user").(*db.User)
+	if !ok || user == nil {
+		log.Errorf("BUG: index handler called, but no user provided")
 		w.WriteHeader(http.StatusInternalServerError)
 		return
-	}
-
-	claims, ok := r.Context().Value("claims").(jwt.Token)
-	if !ok || claims == nil {
-		log.Errorf("BUG: index handler called, but no claims provided")
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-
-	upn, _ := claims.Get("upn")
-	upnString, ok := upn.(string)
-	if len(upnString) == 0 {
-		log.Errorf("access token does not have the 'upn' claim")
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-
-	userID, err := s.database.Lookup(r.Context(), upnString)
-	if err != nil {
-		userID, err = db.NewID()
-		if err != nil {
-			log.Errorf("unable to generate new ID for user")
-			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte("internal error, please try again later"))
-			return
-		}
-		user := &db.User{
-			ID:       userID,
-			Username: upnString,
-			Token:    tok,
-		}
-		err = s.database.WriteUser(r.Context(), user)
-		if err != nil {
-			log.Errorf("unable to store user in database")
-			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte("internal error, please try again later"))
-			return
-		}
 	}
 
 	// register user ID with calendar async fetcher
-	s.store.Add(userID)
+	s.store.Add(user.ID)
 
 	w.Header().Set("content-type", "text/html")
-	fmt.Fprintf(w, `Please copy your <a href="/calendar/%s">personal calendar link</a> and subscribe to it in your calendar application.`, userID)
+	fmt.Fprintf(w, `Please copy your <a href="/calendar/%s">personal calendar link</a> and subscribe to it in your calendar application.`, user.ID)
 }
 
 func (s *Server) SetCalendar(userid db.ID, calendar *CalendarCache) {

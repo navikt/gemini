@@ -6,6 +6,8 @@ import (
 	"encoding/base64"
 	"errors"
 	"io"
+
+	"golang.org/x/oauth2"
 )
 
 type ID string
@@ -13,7 +15,7 @@ type ID string
 type User struct {
 	ID       ID
 	Username string
-	Token    string
+	Token    *oauth2.Token
 }
 
 type Database interface {
