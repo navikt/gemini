@@ -39,15 +39,16 @@ type CalendarCache struct {
 	nextSync    time.Time
 }
 
-func NewStore(ctx context.Context, database db.Database, interval, lifetime time.Duration) *store {
+func NewStore(ctx context.Context, database db.Database, oauth *oauth2.Config, interval, lifetime time.Duration) *store {
 	f := &store{
+		cache:    make(map[db.ID]*CalendarCache),
 		ctx:      ctx,
 		database: database,
-		queue:    make(chan db.ID, 1024),
-		cache:    make(map[db.ID]*CalendarCache),
-		ticker:   time.NewTicker(interval),
 		interval: interval,
 		lifetime: lifetime,
+		oauth:    oauth,
+		queue:    make(chan db.ID, 1024),
+		ticker:   time.NewTicker(interval),
 	}
 	go f.run()
 	return f

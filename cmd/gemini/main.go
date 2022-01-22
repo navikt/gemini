@@ -53,7 +53,7 @@ func run() error {
 	}
 
 	database := db.NewInMemoryDatabase()
-	store := calserv.NewStore(ctx, database, syncInterval, lifetime)
+	store := calserv.NewStore(ctx, database, oauthconf, syncInterval, lifetime)
 	validator := authserv.SessionIDMiddleware(database)
 	srv := calserv.NewServer(database, store)
 	auth := authserv.NewServer(oauthconf, iss, clientid, database)
