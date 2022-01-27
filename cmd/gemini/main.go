@@ -12,6 +12,7 @@ import (
 	"github.com/nais/gemini/pkg/calserv"
 	"github.com/nais/gemini/pkg/db"
 	"github.com/nais/gemini/pkg/version"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	log "github.com/sirupsen/logrus"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/microsoft"
@@ -46,8 +47,12 @@ func run() error {
 	clientid := os.Getenv("AZURE_APP_CLIENT_ID")
 	dsn := os.Getenv("DATABASE_URL")
 	bindAddress := os.Getenv("BIND_ADDRESS")
+	metricsBindAddress := os.Getenv("METRICS_BIND_ADDRESS")
 	if len(bindAddress) == 0 {
 		bindAddress = "127.0.0.1:3000"
+	}
+	if len(metricsBindAddress) == 0 {
+		metricsBindAddress = "127.0.0.1:3001"
 	}
 
 	oauthconf := &oauth2.Config{
@@ -77,6 +82,12 @@ func run() error {
 	go func() {
 		err := http.ListenAndServe(bindAddress, router)
 		log.Errorf("http server has stopped: %s", err)
+		cancel()
+	}()
+
+	go func() {
+		err := http.ListenAndServe(metricsBindAddress, promhttp.Handler())
+		log.Errorf("metrics server has stopped: %s", err)
 		cancel()
 	}()
 

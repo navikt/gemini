@@ -31,6 +31,10 @@ var (
 	)
 )
 
+func init() {
+	prometheus.MustRegister(databaseQueries)
+}
+
 func statusLabel(err error) string {
 	if err == nil {
 		return StatusOK

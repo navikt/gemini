@@ -12,6 +12,8 @@ spec:
       value: https://gemini.nais.io/oauth2/callback
     - name: BIND_ADDRESS
       value: 0.0.0.0:3000
+    - name: METRICS_BIND_ADDRESS
+      value: 0.0.0.0:3001
   azure:
     application:
       enabled: true
@@ -39,6 +41,7 @@ spec:
   port: 3000
   prometheus:
     enabled: true
+    port: 3001
     path: /metrics
   readiness:
     path: /metrics
