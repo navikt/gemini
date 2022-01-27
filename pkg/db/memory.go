@@ -35,6 +35,11 @@ func (i *inMemoryDatabase) GetUser(_ context.Context, id ID) (*User, error) {
 	return user, nil
 }
 
+func (i *inMemoryDatabase) Migrate(_ context.Context) error {
+	log.Debugf("Database migration not needed for in-memory database")
+	return nil
+}
+
 var _ Database = &inMemoryDatabase{}
 
 func NewInMemoryDatabase() Database {

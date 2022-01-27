@@ -40,6 +40,7 @@ func run() error {
 
 	clientid := os.Getenv("CLIENT_ID")
 	iss := os.Getenv("ISSUER")
+	dsn := os.Getenv("DSN")
 
 	oauthconf := &oauth2.Config{
 		ClientID:     clientid,
@@ -52,7 +53,13 @@ func run() error {
 		},
 	}
 
-	database := db.NewInMemoryDatabase()
+	database, err := setupDatabase(dsn)
+	if err != nil {
+		return err
+	}
+
+	log.Infof("Database connection ready.")
+
 	store := calserv.NewStore(ctx, database, oauthconf, syncInterval, lifetime)
 	validator := authserv.SessionIDMiddleware(database)
 	srv := calserv.NewServer(database, store)
@@ -64,6 +71,8 @@ func run() error {
 		log.Errorf("http server has stopped: %s", err)
 		cancel()
 	}()
+
+	log.Infof("Serving requests...")
 
 	for ctx.Err() == nil {
 		select {
@@ -77,6 +86,26 @@ func run() error {
 	}
 
 	return nil
+}
+
+func setupDatabase(dsn string) (db.Database, error) {
+	if len(dsn) == 0 {
+		return db.NewInMemoryDatabase(), nil
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+	defer cancel()
+
+	database, err := db.New(ctx, dsn)
+	if err != nil {
+		return nil, err
+	}
+
+	err = database.Migrate(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return database, nil
 }
 
 func setupRouter(srv *calserv.Server, auth *authserv.Server, validator func(http.Handler) http.Handler) chi.Router {

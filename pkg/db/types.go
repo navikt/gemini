@@ -22,6 +22,7 @@ type Database interface {
 	Lookup(ctx context.Context, username string) (ID, error)
 	GetUser(ctx context.Context, id ID) (*User, error)
 	WriteUser(ctx context.Context, user *User) error
+	Migrate(ctx context.Context) error
 }
 
 var (

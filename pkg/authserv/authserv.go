@@ -97,7 +97,7 @@ func (s *Server) Callback(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		sessionID, err = db.NewID()
 		if err != nil {
-			log.Errorf("unable to generate new ID for user")
+			log.Errorf("unable to generate new ID for user: %s", err)
 			http.Error(w, "internal error, please try again later", http.StatusInternalServerError)
 			return
 		}
@@ -108,7 +108,7 @@ func (s *Server) Callback(w http.ResponseWriter, r *http.Request) {
 		}
 		err = s.database.WriteUser(r.Context(), user)
 		if err != nil {
-			log.Errorf("unable to store user in database")
+			log.Errorf("unable to store user in database: %s", err)
 			http.Error(w, "internal error, please try again later", http.StatusInternalServerError)
 			return
 		}
