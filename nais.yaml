@@ -43,7 +43,7 @@ spec:
   port: 3000
   prometheus:
     enabled: true
-    port: 3001
+    port: "3001"
     path: /metrics
   readiness:
     path: /metrics
