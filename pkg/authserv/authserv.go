@@ -5,9 +5,9 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/nais/gemini/pkg/db"
 	"github.com/google/uuid"
 	"github.com/lestrrat-go/jwx/jwt"
+	"github.com/nais/gemini/pkg/db"
 	log "github.com/sirupsen/logrus"
 	"golang.org/x/oauth2"
 )
@@ -19,17 +19,15 @@ const (
 
 type Server struct {
 	audience string
-	issuer   string
 	cfg      *oauth2.Config
 	database db.Database
 }
 
-func NewServer(cfg *oauth2.Config, issuer, audience string, database db.Database) *Server {
+func NewServer(cfg *oauth2.Config, audience string, database db.Database) *Server {
 	return &Server{
 		cfg:      cfg,
 		database: database,
 		audience: audience,
-		issuer:   issuer,
 	}
 }
 

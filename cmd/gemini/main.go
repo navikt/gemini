@@ -43,14 +43,13 @@ func run() error {
 	sigs := make(chan os.Signal, 1)
 	signal.Notify(sigs, os.Interrupt)
 
-	clientid := os.Getenv("CLIENT_ID")
-	iss := os.Getenv("ISSUER")
-	dsn := os.Getenv("DSN")
+	clientid := os.Getenv("AZURE_APP_CLIENT_ID")
+	dsn := os.Getenv("DATABASE_URL")
 
 	oauthconf := &oauth2.Config{
 		ClientID:     clientid,
-		ClientSecret: os.Getenv("CLIENT_SECRET"),
-		Endpoint:     microsoft.AzureADEndpoint(os.Getenv("TENANT_ID")),
+		ClientSecret: os.Getenv("AZURE_APP_CLIENT_SECRET"),
+		Endpoint:     microsoft.AzureADEndpoint(os.Getenv("AZURE_APP_TENANT_ID")),
 		RedirectURL:  "http://localhost:3000/oauth2/callback",
 		Scopes: []string{
 			"Calendars.Read",
@@ -68,7 +67,7 @@ func run() error {
 	store := calserv.NewStore(ctx, database, oauthconf, syncInterval, lifetime)
 	validator := authserv.SessionIDMiddleware(database)
 	srv := calserv.NewServer(database, store)
-	auth := authserv.NewServer(oauthconf, iss, clientid, database)
+	auth := authserv.NewServer(oauthconf, clientid, database)
 	router := setupRouter(srv, auth, validator)
 
 	go func() {
