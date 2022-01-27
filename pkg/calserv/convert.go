@@ -36,7 +36,14 @@ func Convert(event azure.Event) *ics.VEvent {
 	}
 	e.SetDescription(event.BodyPreview)
 	e.SetLocation(event.Location.DisplayName)
-	//e.SetOrganizer()
+	e.SetOrganizer(event.Organizer.EmailAddress.Name, &ics.KeyValues{
+		Key:   "MAILTO",
+		Value: []string{event.Organizer.EmailAddress.Address},
+	})
+
+	for _, att := range event.Attendees {
+		e.AddAttendee(att.EmailAddress.Address)
+	}
 	//e.AddAlarm()
 	e.SetURL(event.WebLink)
 	setRecurrence(event, e)

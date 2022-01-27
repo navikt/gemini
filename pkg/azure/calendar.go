@@ -16,6 +16,30 @@ type Location struct {
 	DisplayName string
 }
 
+// https://docs.microsoft.com/en-us/graph/api/resources/recipient?view=graph-rest-1.0
+type Recipient struct {
+	EmailAddress EmailAddress
+}
+
+// https://docs.microsoft.com/en-us/graph/api/resources/emailaddress?view=graph-rest-1.0
+type EmailAddress struct {
+	Address string
+	Name    string
+}
+
+// https://docs.microsoft.com/en-us/graph/api/resources/attendee?view=graph-rest-1.0
+type Attendee struct {
+	EmailAddress EmailAddress
+	Status       ResponseStatus
+	Type         string
+}
+
+// https://docs.microsoft.com/en-us/graph/api/resources/responsestatus?view=graph-rest-1.0
+type ResponseStatus struct {
+	// The response type. Possible values are: none, organizer, tentativelyAccepted, accepted, declined, notResponded.
+	Response string
+}
+
 type Result struct {
 	Next  string `json:"@odata.nextLink"`
 	Value Events
@@ -23,9 +47,11 @@ type Result struct {
 
 type Events []Event
 
+// https://docs.microsoft.com/en-us/graph/api/calendar-list-events?view=graph-rest-1.0&tabs=http
+// https://docs.microsoft.com/en-us/graph/api/resources/event?view=graph-rest-1.0
 type Event struct {
 	AllowNewTimeProposals         bool
-	Attendees                     []odata              //": [{"@odata.type": "microsoft.graph.attendee"}],
+	Attendees                     []Attendee           //": [{"@odata.type": "microsoft.graph.attendee"}],
 	Body                          odata                //": {"@odata.type": "microsoft.graph.itemBody"},
 	BodyPreview                   string               //": "string",
 	Categories                    []string             //": ["string"],
@@ -48,7 +74,7 @@ type Event struct {
 	OnlineMeeting                 odata                //": {"@odata.type": "microsoft.graph.onlineMeetingInfo"},
 	OnlineMeetingProvider         string               //": "string",
 	OnlineMeetingUrl              string               //": "string",
-	Organizer                     odata                //": {"@odata.type": "microsoft.graph.recipient"},
+	Organizer                     Recipient            //": {"@odata.type": "microsoft.graph.recipient"},
 	OriginalEndTimeZone           string               //": "string",
 	OriginalStart                 string               //": "String (timestamp)",
 	OriginalStartTimeZone         string               //": "string",
