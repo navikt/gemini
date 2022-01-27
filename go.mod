@@ -1,4 +1,4 @@
-module github.com/ambientsound/gemini
+module github.com/nais/gemini
 
 go 1.17
 

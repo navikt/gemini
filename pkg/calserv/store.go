@@ -6,8 +6,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/ambientsound/gemini/pkg/azure"
-	"github.com/ambientsound/gemini/pkg/db"
+	"github.com/nais/gemini/pkg/azure"
+	"github.com/nais/gemini/pkg/db"
 	ics "github.com/arran4/golang-ical"
 	log "github.com/sirupsen/logrus"
 	"golang.org/x/oauth2"

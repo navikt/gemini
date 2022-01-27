@@ -4,7 +4,7 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/ambientsound/gemini/pkg/db"
+	"github.com/nais/gemini/pkg/db"
 	log "github.com/sirupsen/logrus"
 )
 

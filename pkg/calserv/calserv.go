@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/ambientsound/gemini/pkg/db"
+	"github.com/nais/gemini/pkg/db"
 	"github.com/go-chi/chi"
 	log "github.com/sirupsen/logrus"
 )

@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ambientsound/gemini/pkg/metrics"
+	"github.com/nais/gemini/pkg/metrics"
 	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/pgxpool"
 	log "github.com/sirupsen/logrus"

@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ambientsound/gemini/pkg/azure"
+	"github.com/nais/gemini/pkg/azure"
 	ics "github.com/arran4/golang-ical"
 )
 

@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/ambientsound/gemini/pkg/db"
+	"github.com/nais/gemini/pkg/db"
 	"github.com/google/uuid"
 	"github.com/lestrrat-go/jwx/jwt"
 	log "github.com/sirupsen/logrus"

@@ -7,9 +7,9 @@ import (
 	"os/signal"
 	"time"
 
-	"github.com/ambientsound/gemini/pkg/authserv"
-	"github.com/ambientsound/gemini/pkg/calserv"
-	"github.com/ambientsound/gemini/pkg/db"
+	"github.com/nais/gemini/pkg/authserv"
+	"github.com/nais/gemini/pkg/calserv"
+	"github.com/nais/gemini/pkg/db"
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
 	log "github.com/sirupsen/logrus"
