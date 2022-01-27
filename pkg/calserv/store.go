@@ -9,6 +9,7 @@ import (
 	ics "github.com/arran4/golang-ical"
 	"github.com/nais/gemini/pkg/azure"
 	"github.com/nais/gemini/pkg/db"
+	"github.com/nais/gemini/pkg/metrics"
 	log "github.com/sirupsen/logrus"
 	"golang.org/x/oauth2"
 )
@@ -107,6 +108,7 @@ func (f *store) fetch(userid db.ID) {
 	log.Infof("Synchronizing calendar for user %s", user.Username)
 
 	events, err := azure.GetCalendarEvents(client)
+	metrics.Synchronizations(err)
 	if err != nil {
 		log.Errorf("synchronize %s: %s", user.Username, err)
 		f.cache[userid].err = err
@@ -156,6 +158,7 @@ func (f *store) Add(user *db.User) {
 		nextSync: time.Now(),
 	}
 	f.ticker.Reset(1 * time.Second)
+	metrics.Users.Set(float64(len(f.cache)))
 }
 
 func (f *store) Get(userid db.ID) *CalendarCache {

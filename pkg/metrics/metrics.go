@@ -18,13 +18,33 @@ const (
 )
 
 var (
-	databaseQueries = prometheus.NewHistogramVec(prometheus.HistogramOpts{
-		Name:      "database_queries",
-		Help:      "time to execute database queries",
+	Users = prometheus.NewGauge(prometheus.GaugeOpts{
+		Name:      "users",
+		Help:      "number of managed users",
 		Namespace: namespace,
 		Subsystem: subsystem,
-		Buckets:   prometheus.LinearBuckets(0.005, 0.005, 20),
-	},
+	})
+
+	synchronizations = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name:      "synchronizations",
+			Help:      "number of managed users",
+			Namespace: namespace,
+			Subsystem: subsystem,
+		},
+		[]string{
+			LabelStatus,
+		},
+	)
+
+	databaseQueries = prometheus.NewHistogramVec(
+		prometheus.HistogramOpts{
+			Name:      "database_queries",
+			Help:      "time to execute database queries",
+			Namespace: namespace,
+			Subsystem: subsystem,
+			Buckets:   prometheus.LinearBuckets(0.005, 0.005, 20),
+		},
 		[]string{
 			LabelStatus,
 		},
@@ -32,7 +52,16 @@ var (
 )
 
 func init() {
+	prometheus.MustRegister(Users)
+	prometheus.MustRegister(synchronizations)
 	prometheus.MustRegister(databaseQueries)
+
+	synchronizations.With(prometheus.Labels{
+		LabelStatus: StatusOK,
+	})
+	synchronizations.With(prometheus.Labels{
+		LabelStatus: StatusError,
+	})
 }
 
 func statusLabel(err error) string {
@@ -40,6 +69,12 @@ func statusLabel(err error) string {
 		return StatusOK
 	}
 	return StatusError
+}
+
+func Synchronizations(err error) {
+	synchronizations.With(prometheus.Labels{
+		LabelStatus: statusLabel(err),
+	}).Inc()
 }
 
 func DatabaseQuery(t time.Time, err error) {
