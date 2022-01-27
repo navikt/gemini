@@ -5,8 +5,29 @@ import (
 	"encoding/json"
 	"strings"
 
+	"github.com/jackc/pgx/v4"
 	"golang.org/x/oauth2"
 )
+
+func (db *postgresDB) Users(ctx context.Context) ([]*User, error) {
+	users := make([]*User, 0)
+	query := `SELECT id, username, token FROM users`
+	rows, err := db.timedQuery(ctx, query)
+
+	if err != nil {
+		return nil, err
+	}
+
+	for rows.Next() {
+		user, err := scanUser(rows)
+		if err != nil {
+			return nil, err
+		}
+		users = append(users, user)
+	}
+
+	return users, nil
+}
 
 func (db *postgresDB) WriteUser(ctx context.Context, user *User) error {
 	query := `
@@ -56,23 +77,29 @@ func (db *postgresDB) GetUser(ctx context.Context, id ID) (*User, error) {
 		return nil, err
 	}
 
+	for rows.Next() {
+		return scanUser(rows)
+	}
+
+	return nil, ErrNotFound
+}
+
+func scanUser(row pgx.Row) (*User, error) {
 	var token string
 	user := &User{
 		Token: &oauth2.Token{},
 	}
 
-	for rows.Next() {
-		err = rows.Scan(&user.ID, &user.Username, &token)
-		if err != nil {
-			break
-		}
-		r := strings.NewReader(token)
-		err = json.NewDecoder(r).Decode(user.Token)
-		if err != nil {
-			return nil, err
-		}
-		return user, nil
+	err := row.Scan(&user.ID, &user.Username, &token)
+	if err != nil {
+		return nil, err
 	}
 
-	return nil, ErrNotFound
+	r := strings.NewReader(token)
+	err = json.NewDecoder(r).Decode(user.Token)
+	if err != nil {
+		return nil, err
+	}
+
+	return user, nil
 }

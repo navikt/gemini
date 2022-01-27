@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/nais/gemini/pkg/db"
 	"github.com/go-chi/chi"
+	"github.com/nais/gemini/pkg/db"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -32,8 +32,8 @@ func (s *Server) Index(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// register user ID with calendar async fetcher
-	s.store.Add(user.ID)
+	// register user with calendar async fetcher
+	s.store.Add(user)
 
 	w.Header().Set("content-type", "text/html")
 	fmt.Fprintf(w, `Please copy your <a href="/calendar/%s">personal calendar link</a> and subscribe to it in your calendar application.`, user.ID)

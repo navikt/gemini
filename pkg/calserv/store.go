@@ -6,15 +6,15 @@ import (
 	"sync"
 	"time"
 
+	ics "github.com/arran4/golang-ical"
 	"github.com/nais/gemini/pkg/azure"
 	"github.com/nais/gemini/pkg/db"
-	ics "github.com/arran4/golang-ical"
 	log "github.com/sirupsen/logrus"
 	"golang.org/x/oauth2"
 )
 
 type Store interface {
-	Add(userid db.ID)
+	Add(user *db.User)
 	Get(userid db.ID) *CalendarCache
 }
 
@@ -72,6 +72,7 @@ func (f *store) run() {
 func (f *store) fetchOutdated() {
 	f.lock.Lock()
 	defer f.lock.Unlock()
+	log.Infof("Synchronizing all calendars...")
 	for i := range f.cache {
 		if f.cache[i].nextSync.After(time.Now()) {
 			continue
@@ -79,6 +80,7 @@ func (f *store) fetchOutdated() {
 		f.cache[i].nextSync = time.Time{}
 		f.queue <- f.cache[i].userID
 	}
+	log.Infof("Finished calendar synchronization.")
 }
 
 func (f *store) fetch(userid db.ID) {
@@ -102,8 +104,11 @@ func (f *store) fetch(userid db.ID) {
 	src := f.oauth.TokenSource(ctx, user.Token)
 	client := oauth2.NewClient(ctx, src)
 
+	log.Infof("Synchronizing calendar for user %s", user.Username)
+
 	events, err := azure.GetCalendarEvents(client)
 	if err != nil {
+		log.Errorf("synchronize %s: %s", user.Username, err)
 		f.cache[userid].err = err
 		f.cache[userid].lastSync = time.Now()
 		f.cache[userid].nextSync = time.Now().Add(5 * time.Minute)
@@ -138,14 +143,15 @@ func (f *store) fetch(userid db.ID) {
 	f.cache[userid].nextSync = now.Add(f.lifetime)
 }
 
-func (f *store) Add(userid db.ID) {
+func (f *store) Add(user *db.User) {
 	f.lock.Lock()
 	defer f.lock.Unlock()
-	if f.cache[userid] != nil {
+	if f.cache[user.ID] != nil {
 		return
 	}
-	f.cache[userid] = &CalendarCache{
-		userID:   userid,
+	log.Infof("Monitoring calendar for user %s", user.Username)
+	f.cache[user.ID] = &CalendarCache{
+		userID:   user.ID,
 		err:      fmt.Errorf("not yet synchronized"),
 		nextSync: time.Now(),
 	}

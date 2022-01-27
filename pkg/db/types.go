@@ -20,6 +20,7 @@ type User struct {
 
 type Database interface {
 	Lookup(ctx context.Context, username string) (ID, error)
+	Users(ctx context.Context) ([]*User, error)
 	GetUser(ctx context.Context, id ID) (*User, error)
 	WriteUser(ctx context.Context, user *User) error
 	Migrate(ctx context.Context) error

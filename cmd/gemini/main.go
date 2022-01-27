@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"os"
 	"os/signal"
@@ -78,6 +79,14 @@ func run() error {
 	srv := calserv.NewServer(database, store)
 	auth := authserv.NewServer(oauthconf, clientid, database)
 	router := setupRouter(srv, auth, validator)
+
+	users, err := database.Users(ctx)
+	if err != nil {
+		return fmt.Errorf("load users from database: %w", err)
+	}
+	for _, user := range users {
+		store.Add(user)
+	}
 
 	go func() {
 		err := http.ListenAndServe(bindAddress, router)

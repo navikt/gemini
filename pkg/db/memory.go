@@ -10,6 +10,14 @@ type inMemoryDatabase struct {
 	table map[ID]*User
 }
 
+func (i *inMemoryDatabase) Users(_ context.Context) ([]*User, error) {
+	users := make([]*User, 0, len(i.table))
+	for _, user := range i.table {
+		users = append(users, user)
+	}
+	return users, nil
+}
+
 func (i *inMemoryDatabase) WriteUser(_ context.Context, user *User) error {
 	log.Debugf("Stored user '%s' in database", user.Username)
 	i.table[user.ID] = user
