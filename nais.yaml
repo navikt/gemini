@@ -7,6 +7,11 @@ metadata:
   namespace: aura
 spec:
   image: {{ image }}
+  env:
+    - name: REDIRECT_URL
+      value: https://gemini.nais.io/oauth2/callback
+    - name: BIND_ADDRESS
+      value: 0.0.0.0:3000
   azure:
     application:
       enabled: true

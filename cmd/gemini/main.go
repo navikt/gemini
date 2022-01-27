@@ -45,12 +45,16 @@ func run() error {
 
 	clientid := os.Getenv("AZURE_APP_CLIENT_ID")
 	dsn := os.Getenv("DATABASE_URL")
+	bindAddress := os.Getenv("BIND_ADDRESS")
+	if len(bindAddress) == 0 {
+		bindAddress = "127.0.0.1:3000"
+	}
 
 	oauthconf := &oauth2.Config{
 		ClientID:     clientid,
 		ClientSecret: os.Getenv("AZURE_APP_CLIENT_SECRET"),
 		Endpoint:     microsoft.AzureADEndpoint(os.Getenv("AZURE_APP_TENANT_ID")),
-		RedirectURL:  "http://localhost:3000/oauth2/callback",
+		RedirectURL:  os.Getenv("REDIRECT_URL"),
 		Scopes: []string{
 			"Calendars.Read",
 			"offline_access",
@@ -71,7 +75,7 @@ func run() error {
 	router := setupRouter(srv, auth, validator)
 
 	go func() {
-		err := http.ListenAndServe("127.0.0.1:3000", router)
+		err := http.ListenAndServe(bindAddress, router)
 		log.Errorf("http server has stopped: %s", err)
 		cancel()
 	}()
