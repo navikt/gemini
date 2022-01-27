@@ -6,8 +6,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/nais/gemini/pkg/azure"
 	ics "github.com/arran4/golang-ical"
+	"github.com/nais/gemini/pkg/azure"
 )
 
 type RecurringRule struct {
@@ -186,7 +186,6 @@ func setRecurrence(event azure.Event, e *ics.VEvent) {
 	}
 
 	rrule := rule.Serialize()
-	e.SetDescription(rrule)
 
 	e.AddRrule(rrule)
 }

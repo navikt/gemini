@@ -1,8 +1,8 @@
 package calserv
 
 import (
-	"github.com/nais/gemini/pkg/azure"
 	ics "github.com/arran4/golang-ical"
+	"github.com/nais/gemini/pkg/azure"
 )
 
 const almostRFCTime = "20060102T150405"
