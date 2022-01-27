@@ -72,7 +72,7 @@ func (f *store) run() {
 func (f *store) fetchOutdated() {
 	f.lock.Lock()
 	defer f.lock.Unlock()
-	log.Infof("Synchronizing all calendars...")
+	log.Debugf("Synchronizing all calendars...")
 	for i := range f.cache {
 		if f.cache[i].nextSync.After(time.Now()) {
 			continue
@@ -80,7 +80,7 @@ func (f *store) fetchOutdated() {
 		f.cache[i].nextSync = time.Time{}
 		f.queue <- f.cache[i].userID
 	}
-	log.Infof("Finished calendar synchronization.")
+	log.Debugf("Finished calendar synchronization.")
 }
 
 func (f *store) fetch(userid db.ID) {
