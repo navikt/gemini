@@ -8,7 +8,7 @@ RUN make test
 RUN make alpine
 
 FROM alpine:3.15
-RUN apk add --no-cache ca-certificates
+RUN apk add --no-cache ca-certificates tzdata
 RUN export PATH=$PATH:/app
 WORKDIR /app
 COPY --from=builder /src/bin/gemini /app/gemini
