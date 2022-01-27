@@ -7,11 +7,11 @@ import (
 	"os/signal"
 	"time"
 
+	"github.com/go-chi/chi"
 	"github.com/nais/gemini/pkg/authserv"
 	"github.com/nais/gemini/pkg/calserv"
 	"github.com/nais/gemini/pkg/db"
-	"github.com/go-chi/chi"
-	"github.com/go-chi/chi/middleware"
+	"github.com/nais/gemini/pkg/version"
 	log "github.com/sirupsen/logrus"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/microsoft"
@@ -30,7 +30,12 @@ const lifetime = time.Hour
 
 func run() error {
 	log.SetLevel(log.TraceLevel)
-	log.Infof("GEMINI starting up - Office365 to iCal")
+	log.Infof("GEMINI %s", version.Version())
+
+	bt, err := version.BuildTime()
+	if err == nil {
+		log.Infof("Build time: %s", bt.String())
+	}
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -110,8 +115,6 @@ func setupDatabase(dsn string) (db.Database, error) {
 
 func setupRouter(srv *calserv.Server, auth *authserv.Server, validator func(http.Handler) http.Handler) chi.Router {
 	r := chi.NewRouter()
-
-	r.Use(middleware.Logger)
 
 	r.Route("/oauth2", func(r chi.Router) {
 		r.HandleFunc("/login", auth.Login)
