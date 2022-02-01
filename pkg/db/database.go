@@ -6,9 +6,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/nais/gemini/pkg/metrics"
 	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/pgxpool"
+	"github.com/nais/gemini/pkg/metrics"
 	log "github.com/sirupsen/logrus"
 )
 

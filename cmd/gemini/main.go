@@ -67,6 +67,10 @@ func run() error {
 		},
 	}
 
+	// hack to limit connections to database
+	if len(dsn) > 0 {
+		dsn += " pool_max_conns=1"
+	}
 	database, err := setupDatabase(dsn)
 	if err != nil {
 		return err
