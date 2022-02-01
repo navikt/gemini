@@ -4,8 +4,10 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"net/url"
 	"os"
 	"os/signal"
+	"strconv"
 	"time"
 
 	"github.com/go-chi/chi"
@@ -67,10 +69,14 @@ func run() error {
 		},
 	}
 
-	// hack to limit connections to database
+	// hack required for tiny cloud sql instances
 	if len(dsn) > 0 {
-		dsn += " pool_max_conns=1"
+		dsn, err = dbURLWithConnectionLimit(dsn, 1)
+		if err != nil {
+			return fmt.Errorf("add connection limit to database url: %w", err)
+		}
 	}
+
 	database, err := setupDatabase(dsn)
 	if err != nil {
 		return err
@@ -156,4 +162,16 @@ func setupRouter(srv *calserv.Server, auth *authserv.Server, validator func(http
 	r.HandleFunc("/calendar/{userid}", srv.Calendar)
 
 	return r
+}
+
+func dbURLWithConnectionLimit(dsn string, limit int) (string, error) {
+	// hack to limit connections to database
+	dburl, err := url.Parse(dsn)
+	if err != nil {
+		return dsn, err
+	}
+	q := dburl.Query()
+	q.Add("pool_max_conns", strconv.Itoa(1))
+	dburl.RawQuery = q.Encode()
+	return dburl.String(), nil
 }
