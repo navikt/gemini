@@ -51,11 +51,17 @@ func run() error {
 	dsn := os.Getenv("DATABASE_URL")
 	bindAddress := os.Getenv("BIND_ADDRESS")
 	metricsBindAddress := os.Getenv("METRICS_BIND_ADDRESS")
+	connLimitStr := os.Getenv("DATABASE_CONNECTION_LIMIT")
 	if len(bindAddress) == 0 {
 		bindAddress = "127.0.0.1:3000"
 	}
 	if len(metricsBindAddress) == 0 {
 		metricsBindAddress = "127.0.0.1:3001"
+	}
+
+	connLimit, err := strconv.Atoi(connLimitStr)
+	if err != nil {
+		connLimit = 0
 	}
 
 	oauthconf := &oauth2.Config{
@@ -70,8 +76,8 @@ func run() error {
 	}
 
 	// hack required for tiny cloud sql instances
-	if len(dsn) > 0 {
-		dsn, err = dbURLWithConnectionLimit(dsn, 1)
+	if len(dsn) > 0 && connLimit > 0 {
+		dsn, err = dbURLWithConnectionLimit(dsn, connLimit)
 		if err != nil {
 			return fmt.Errorf("add connection limit to database url: %w", err)
 		}

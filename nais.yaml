@@ -8,6 +8,8 @@ metadata:
 spec:
   image: {{ image }}
   env:
+    - name: DATABASE_CONNECTION_LIMIT
+      value: "2"
     - name: REDIRECT_URL
       value: https://gemini.nais.io/oauth2/callback
     - name: BIND_ADDRESS
