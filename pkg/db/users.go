@@ -18,6 +18,8 @@ func (db *postgresDB) Users(ctx context.Context) ([]*User, error) {
 		return nil, err
 	}
 
+	defer rows.Close()
+
 	for rows.Next() {
 		user, err := scanUser(rows)
 		if err != nil {
@@ -61,6 +63,8 @@ func (db *postgresDB) Lookup(ctx context.Context, username string) (ID, error) {
 		return id, err
 	}
 
+	defer rows.Close()
+
 	for rows.Next() {
 		err = rows.Scan(&id)
 		return id, err
@@ -76,6 +80,8 @@ func (db *postgresDB) GetUser(ctx context.Context, id ID) (*User, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	defer rows.Close()
 
 	for rows.Next() {
 		return scanUser(rows)
