@@ -41,10 +41,17 @@ func Convert(event azure.Event) *ics.VEvent {
 		Value: []string{event.Organizer.EmailAddress.Address},
 	})
 
-	for _, att := range event.Attendees {
-		e.AddAttendee(att.EmailAddress.Address)
+	// optimalization for Google Calendar limit on 1MB per iCAL file
+	const maxAttendees = 10
+	if len(event.Attendees) <= maxAttendees {
+		for _, att := range event.Attendees {
+			e.AddAttendee(att.EmailAddress.Address)
+		}
 	}
+
+	// TODO
 	//e.AddAlarm()
+
 	e.SetURL(event.WebLink)
 	setRecurrence(event, e)
 
