@@ -34,7 +34,11 @@ func Convert(event azure.Event) *ics.VEvent {
 		e.SetProperty(ics.ComponentPropertyDtStart, event.Start.Time().Local().Format(almostRFCTime), tz)
 		e.SetProperty(ics.ComponentPropertyDtEnd, event.End.Time().Local().Format(almostRFCTime), tz)
 	}
-	e.SetDescription(event.BodyPreview)
+
+	if len(event.BodyPreview) > 0 {
+		e.SetDescription(event.BodyPreview)
+	}
+
 	e.SetLocation(event.Location.DisplayName)
 	e.SetOrganizer(event.Organizer.EmailAddress.Name, &ics.KeyValues{
 		Key:   "MAILTO",
