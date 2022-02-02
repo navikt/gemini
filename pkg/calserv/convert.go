@@ -13,6 +13,7 @@ func Calendar(events []azure.Event) *ics.Calendar {
 	for _, ev := range events {
 		cal.AddVEvent(Convert(ev))
 	}
+	cal.SetName("NAV")
 	cal.SetProductId("GEMINI")
 	cal.SetTzid(tz)
 	return cal
