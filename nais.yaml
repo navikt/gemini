@@ -20,6 +20,7 @@ spec:
       value: Europe/Oslo
   azure:
     application:
+      allowAllUsers: true
       enabled: true
       tenant: nav.no
   gcp:
