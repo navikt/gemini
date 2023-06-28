@@ -89,7 +89,7 @@ func (f *store) fetch(userid db.ID) {
 		panic("BUG: fetching an unregistered calendar")
 	}
 
-	ctx, cancel := context.WithTimeout(f.ctx, time.Minute*2)
+	ctx, cancel := context.WithTimeout(f.ctx, time.Minute*4)
 	defer cancel()
 
 	user, err := f.database.GetUser(ctx, userid)
