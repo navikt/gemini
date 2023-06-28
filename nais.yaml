@@ -38,17 +38,10 @@ spec:
       type: POSTGRES_12
   ingresses:
   - https://gemini.nais.io
-  liveness:
-    failureThreshold: 3
-    path: /metrics
-    periodSeconds: 10
-    timeout: 1
   port: 3000
   prometheus:
     enabled: true
     port: "3001"
-    path: /metrics
-  readiness:
     path: /metrics
   replicas:
     cpuThresholdPercentage: 50
@@ -56,8 +49,6 @@ spec:
     min: 1
   resources:
     limits:
-      cpu: 800m
-      memory: 512Mi
+      memory: 4Gi
     requests:
       cpu: 500m
-      memory: 256Mi
