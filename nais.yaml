@@ -11,7 +11,7 @@ spec:
     - name: DATABASE_CONNECTION_LIMIT
       value: "2"
     - name: REDIRECT_URL
-      value: https://gemini.nais.io/oauth2/callback
+      value: https://gemini.ekstern.prod-gcp.cloud.nais.io/oauth2/callback
     - name: BIND_ADDRESS
       value: 0.0.0.0:3000
     - name: METRICS_BIND_ADDRESS
@@ -38,6 +38,7 @@ spec:
       type: POSTGRES_12
   ingresses:
   - https://gemini.nais.io
+  - https://gemini.ekstern.prod-gcp.cloud.nais.io
   port: 3000
   prometheus:
     enabled: true
