@@ -6,8 +6,9 @@ import (
 	"strconv"
 
 	"github.com/go-chi/chi"
-	"github.com/nais/gemini/pkg/db"
 	log "github.com/sirupsen/logrus"
+
+	"github.com/nais/gemini/pkg/db"
 )
 
 type Server struct {
@@ -25,18 +26,23 @@ func NewServer(database db.Database, store Store) *Server {
 }
 
 func (s *Server) Index(w http.ResponseWriter, r *http.Request) {
-	user, ok := r.Context().Value("user").(*db.User)
-	if !ok || user == nil {
-		log.Errorf("BUG: index handler called, but no user provided")
-		w.WriteHeader(http.StatusInternalServerError)
-		return
+	templateParams := &TemplateParameters{}
+
+	user, _ := r.Context().Value("user").(*db.User)
+	if user != nil {
+		// register user with calendar async fetcher
+		s.store.Add(user)
+		templateParams.Authenticated = true
+		templateParams.UserID = string(user.ID)
 	}
 
-	// register user with calendar async fetcher
-	s.store.Add(user)
+	err := tpl.Execute(w, templateParams)
+	if err != nil {
+		log.Errorf("BUG: template render error: %s", err)
+	}
 
-	w.Header().Set("content-type", "text/html")
-	fmt.Fprintf(w, `Please copy your <a href="/calendar/%s">personal calendar link</a> and subscribe to it in your calendar application.`, user.ID)
+	//w.Header().Set("content-type", "text/html")
+	//fmt.Fprintf(w, `Please copy your <a href="/calendar/%s">personal calendar link</a> and subscribe to it in your calendar application.`, user.ID)
 }
 
 func (s *Server) SetCalendar(userid db.ID, calendar *CalendarCache) {

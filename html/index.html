@@ -1,0 +1,58 @@
+<!doctype html>
+
+<html lang="nb">
+<head>
+    <meta charset="utf-8">
+    <title>
+        Gemini: dupe'ing your Azure calendar since 2022
+    </title>
+</head>
+
+<body>
+
+<h1>Gemini</h1>
+
+<p>
+    Gemini lager en kopi av din Microsoft-kalender i <em>iCalendar</em>-format
+    slik at du kan bruke den kalender-riggen du selv vil.
+</p>
+
+<p>
+    Bygget med <code>+kjærlighet +sikkerhet -microsoft -otp</code> fra <a href="https://github.com/nais/gemini">NAIS</a>.
+</p>
+
+{{ if .Authenticated }}
+<h2>Kalender-link</h2>
+<p>
+    <a href="/calendar/{{ .UserID }}">https://gemini.external.prod-gcp.nav.cloud.nais.io/calendar/{{ .UserID }}</a>.
+</p>
+{{ end }}
+
+<h2>Slik funker det</h2>
+{{ if not .Authenticated }}
+<p>
+    Først må du <a href="/oauth2/login">logge inn på din NAV IT-konto</a>.
+    Når du har gjort det får du en hemmelig kalender-lenke.
+</p>
+{{ end }}
+
+<p>
+    Lenken legges inn i e-postklienten din som en <em>subscription</em>. Del aldri lenken med andre!
+</p>
+<p>
+    Alle møter og invitasjoner er <em>read-only</em>. Alle endringer i kalenderen, også RVSP, krever dermed at man bruker
+    Azure-kalenderen. Men i det minste kan du se kalenderen på telefonen din uten å være innrullert.
+</p>
+
+<h2>Hva sier andre?</h2>
+<blockquote>
+   "kudos for gemini btw, den er jævlig nyttig"
+</blockquote>
+<blockquote>
+   "Jeg har lyst til å integrere microsoftkontoen min med kalenderen min i Ubuntu, men det stoppet opp pga 2FA.
+   Gemini funket helt nydelig!!!"
+</blockquote>
+
+</body>
+
+</html>
