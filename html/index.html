@@ -4,7 +4,7 @@
 <head>
     <meta charset="utf-8">
     <title>
-        Gemini: dupe'ing your Azure calendar since 2022
+        Gemini: duping your Azure calendar since 2022
     </title>
 </head>
 
@@ -24,7 +24,10 @@
 {{ if .Authenticated }}
 <h2>Kalender-link</h2>
 <p>
-    <a href="/calendar/{{ .UserID }}">https://gemini.external.prod-gcp.nav.cloud.nais.io/calendar/{{ .UserID }}</a>.
+    <a href="/calendar/{{ .UserID }}">https://gemini.external.prod-gcp.nav.cloud.nais.io/calendar/{{ .UserID }}</a>
+</p>
+<p>
+    Del aldri lenken med andre!
 </p>
 {{ end }}
 
@@ -37,20 +40,25 @@
 {{ end }}
 
 <p>
-    Lenken legges inn i e-postklienten din som en <em>subscription</em>. Del aldri lenken med andre!
+    Lenken legges inn i e-postklienten som et abonnement.
+    Let etter noe som likner på <em>New Calendar Subscription</em>.
 </p>
 <p>
-    Alle møter og invitasjoner er <em>read-only</em>. Alle endringer i kalenderen, også RVSP, krever dermed at man bruker
-    Azure-kalenderen. Men i det minste kan du se kalenderen på telefonen din uten å være innrullert.
+    Møter og invitasjoner er <em>read-only</em>. Vedlegg fjernes.
+    Endringer og
+    <abbr title="répondez s'il vous plaît">RSVP</abbr> krever at man bruker
+    Outlook eller web-kalenderen.
+    I det minste kan du se kalenderen på telefonen din uten å være innrullert.
+    Eller integrere den med din private Google-kalender. Mulighetene er uendelige.
 </p>
 
 <h2>Hva sier andre?</h2>
 <blockquote>
-   "kudos for gemini btw, den er jævlig nyttig"
+    "kudos for gemini btw, den er jævlig nyttig"
 </blockquote>
 <blockquote>
-   "Jeg har lyst til å integrere microsoftkontoen min med kalenderen min i Ubuntu, men det stoppet opp pga 2FA.
-   Gemini funket helt nydelig!!!"
+    "Jeg har lyst til å integrere microsoftkontoen min med kalenderen min i Ubuntu, men det stoppet opp pga 2FA.
+    Gemini funket helt nydelig!!!"
 </blockquote>
 
 </body>
