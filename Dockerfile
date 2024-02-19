@@ -1,4 +1,4 @@
-FROM golang:1.17-alpine as builder
+FROM golang:1.22-alpine as builder
 RUN apk add --no-cache git make curl
 ENV GOOS=linux
 ENV CGO_ENABLED=0
@@ -7,7 +7,7 @@ WORKDIR /src
 RUN make test
 RUN make alpine
 
-FROM alpine:3.15
+FROM alpine:3
 RUN apk add --no-cache ca-certificates tzdata
 RUN export PATH=$PATH:/app
 WORKDIR /app
