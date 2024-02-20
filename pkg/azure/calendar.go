@@ -101,13 +101,13 @@ type Event struct {
 // List calendar events at Azure endpoint.
 //
 // The events are filtered such that they either have to be recurring events,
-// or at most six months before today.
+// or at most two months before today.
 //
 // https://learn.microsoft.com/en-us/graph/api/group-list-events?view=graph-rest-1.0&tabs=http
 func GetCalendarEvents(client *http.Client) ([]Event, error) {
 	t := time.Now()
 
-	const backfillDuration = time.Hour * 24 * 30 * 6
+	const backfillDuration = time.Hour * 24 * 30 * 2
 	cutoffTime := t.Add(-backfillDuration)
 
 	values := &url.Values{}
