@@ -36,8 +36,10 @@ func Convert(event azure.Event) *ics.VEvent {
 		e.SetProperty(ics.ComponentPropertyDtEnd, event.End.Time().Local().Format(almostRFCTime), tz)
 	}
 
-	if len(event.BodyPreview) > 0 {
-		e.SetDescription(event.BodyPreview)
+	if len(event.Body.Content) > 0 && event.Body.ContentType == "text" {
+		e.SetDescription(fixText(event.Body.Content))
+	} else if len(event.BodyPreview) > 0 {
+		e.SetDescription(fixText(event.BodyPreview))
 	}
 
 	e.SetLocation(event.Location.DisplayName)
@@ -57,4 +59,11 @@ func Convert(event azure.Event) *ics.VEvent {
 	setRecurrence(event, e)
 
 	return e
+}
+
+// Remove crappy Microsoft formatting
+func fixText(s string) string {
+	s = strings.ReplaceAll(s, "\r", "")
+	s = strings.TrimSpace(s)
+	return s
 }

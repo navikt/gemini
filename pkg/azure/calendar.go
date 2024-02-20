@@ -35,6 +35,12 @@ type Attendee struct {
 	Type         string
 }
 
+// https://learn.microsoft.com/en-us/graph/api/resources/itembody?view=graph-rest-1.0
+type Body struct {
+	Content     string // The content of the item.
+	ContentType string // The type of the content. Possible values are text and html.
+}
+
 // https://docs.microsoft.com/en-us/graph/api/resources/responsestatus?view=graph-rest-1.0
 type ResponseStatus struct {
 	// The response type. Possible values are: none, organizer, tentativelyAccepted, accepted, declined, notResponded.
@@ -53,7 +59,7 @@ type Events []Event
 type Event struct {
 	AllowNewTimeProposals         bool
 	Attendees                     []Attendee           //": [{"@odata.type": "microsoft.graph.attendee"}],
-	Body                          odata                //": {"@odata.type": "microsoft.graph.itemBody"},
+	Body                          Body                 //": {"@odata.type": "microsoft.graph.itemBody"},
 	BodyPreview                   string               //": "string",
 	Categories                    []string             //": ["string"],
 	ChangeKey                     string               //": "string",
@@ -120,10 +126,13 @@ func GetCalendarEvents(client *http.Client) ([]Event, error) {
 	for len(uri) > 0 {
 		log.Debugf("Fetching events from %s", uri)
 
-		// TODO: add request header for longer description, but as text
-		// Prefer: outlook.body-content-type="text"
+		req, err := http.NewRequest(http.MethodGet, uri, nil)
+		if err != nil {
+			return nil, err
+		}
+		req.Header.Set("Prefer", "outlook.body-content-type=text")
 
-		resp, err := client.Get(uri)
+		resp, err := client.Do(req)
 		if err != nil {
 			return nil, err
 		}
