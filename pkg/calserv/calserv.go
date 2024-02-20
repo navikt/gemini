@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/go-chi/chi"
 	log "github.com/sirupsen/logrus"
@@ -36,9 +37,9 @@ func (s *Server) Index(w http.ResponseWriter, r *http.Request) {
 		cache := s.store.Get(user.ID)
 		if cache != nil && cache.calendar != nil {
 			templateParams.Size = len([]byte(cache.calendar.Serialize()))
-			templateParams.NextSync = cache.nextSync
-			templateParams.LastSync = cache.lastSync
-			templateParams.LastSuccess = cache.lastSuccess
+			templateParams.NextSync = cache.nextSync.Truncate(time.Second)
+			templateParams.LastSync = cache.lastSync.Truncate(time.Second)
+			templateParams.LastSuccess = cache.lastSuccess.Truncate(time.Second)
 			if cache.err != nil {
 				templateParams.Error = cache.err.Error()
 			}
