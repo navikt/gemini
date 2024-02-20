@@ -1,12 +1,49 @@
 <!doctype html>
 
-<!-- Ikke noe rammeverk og JS-piss, bare håndskrevet HTML. -->
+<!--
+
+      ,ad8888ba,                                88             88
+     d8"'    `"8b                               ""             ""
+    d8'
+    88             ,adPPYba, 88,dPYba,,adPYba,  88 8b,dPPYba,  88
+    88      88888 a8P_____88 88P'   "88"    "8a 88 88P'   `"8a 88
+    Y8,        88 8PP""""""" 88      88      88 88 88       88 88
+     Y8a.    .a88 "8b,   ,aa 88      88      88 88 88       88 88
+      `"Y88888P"   `"Ybbd8"' 88      88      88 88 88       88 88
+
+-->
+
 <html lang="nb">
 <head>
     <meta charset="utf-8">
     <title>
-        Gemini: duping your Azure calendar since 2022
+        Gemini: duping your Office365 calendar
     </title>
+    <style>
+        html {
+            min-height: 100%;
+            background: white;
+            background: linear-gradient(0deg, rgba(255,255,255,1) 0%, rgba(58,21,70,1) 100%);
+        }
+        body {
+            background: white;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 1rem 3.5rem;
+            font-family: serif;
+            font-size: 1.1rem;
+        }
+        p, blockquote {
+            margin: 0.75em 0;
+            line-height: 1.25em;
+        }
+        code {
+            font-size: 0.75em;
+        }
+        h1, h2 {
+            margin: 1em 0 0.5em;
+        }
+    </style>
 </head>
 
 <body>
@@ -19,7 +56,7 @@
 </p>
 
 <p>
-    Bygget med <code>+kjærlighet +sikkerhet -microsoft -otp</code> fra <a href="https://github.com/nais/gemini">NAIS</a>.
+    Bygget av <a href="https://github.com/nais/gemini">NAIS</a> med <code>+kjærlighet +sikkerhet -microsoft -otp</code>
 </p>
 
 {{ if .Authenticated }}
@@ -29,7 +66,8 @@
 </p>
 <p>
     Legg kalenderen inn som en <em>subscription</em>, ellers
-    <a href="https://nav-it.slack.com/archives/C60FFACN5/p1692783009054259?thread_ts=1692782265.181499&cid=C60FFACN5">går det galt</a>!
+    <a href="https://nav-it.slack.com/archives/C60FFACN5/p1692783009054259?thread_ts=1692782265.181499&cid=C60FFACN5">går
+        det galt</a>!
     Lenken er personlig, del den ikke med andre.
 </p>
 
@@ -57,20 +95,20 @@
 <p>
     Først må du <a href="/oauth2/login">logge inn på din NAV IT-konto</a>.
     Når du har gjort det får du en hemmelig kalender-lenke.
+    Lenken kan brukes fra Internett, og legges inn i e-postklienten som en <em>subscription</em>.
 </p>
 {{ end }}
 
 <p>
-    Lenken legges inn i e-postklienten som et abonnement.
-    Let etter noe som likner på <em>New Calendar Subscription</em>.
-</p>
-<p>
-    Møter og invitasjoner er <em>read-only</em>. Vedlegg fjernes.
+    Møter og invitasjoner er <em>read-only</em>.
+    Vedlegg fjernes.
+    Varslinger fjernes.
     Endringer og
     <abbr title="répondez s'il vous plaît">RSVP</abbr> krever at man bruker
     Outlook eller web-kalenderen.
     I det minste kan du se kalenderen på telefonen din uten å være innrullert.
-    Eller integrere den med din private Google-kalender. Mulighetene er uendelige.
+    Eller integrere den med Google-kalender, eller Linux, eller nesten hva som helst.
+    Mulighetene er mange.
 </p>
 
 <h2>Hva sier andre?</h2>
