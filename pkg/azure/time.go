@@ -48,29 +48,33 @@ func (m SimpleDate) Time() time.Time {
 	return t
 }
 
+// Microsoft's idea of a datetime object:
+// 1. Start out with RFC3339, which includes a timezone.
+// 2. Remove timezone, because who needs standards anyway.
+// 3. Reintroduce timezone in a separate variable and bundle the two together in a struct.
 type BullshitTime struct {
 	DateTime string
 	TimeZone string
 }
 
-const bullshitTime = "2006-01-02T15:04:05.0000000"
+// RFC3339 without timezone.
+const bullshitTimeFormat = "2006-01-02T15:04:05.0000000"
 
 // Time converts bullshit data into real timestamps
-// "start": {
-//   "dateTime": "2022-01-11T11:00:00.0000000",
-//   "timeZone": "UTC"
-// },
+//
+//	"start": {
+//	  "dateTime": "2022-01-11T11:00:00.0000000",
+//	  "timeZone": "UTC"
+//	},
 func (m *BullshitTime) Time() time.Time {
 	var loc *time.Location
 	loc, err := time.LoadLocation(m.TimeZone)
 	if err != nil {
 		loc = time.UTC
 	}
-	t, err := time.ParseInLocation(bullshitTime, m.DateTime, loc)
+	t, err := time.ParseInLocation(bullshitTimeFormat, m.DateTime, loc)
 	if err != nil {
 		panic(err)
 	}
-	//t, _ := time.Parse(bullshitTime, m.DateTime)
-	//return t.In(loc)
 	return t
 }
