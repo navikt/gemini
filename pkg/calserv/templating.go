@@ -3,6 +3,7 @@ package calserv
 import (
 	"fmt"
 	"html/template"
+	"time"
 
 	"github.com/nais/gemini/html"
 )
@@ -10,6 +11,10 @@ import (
 type TemplateParameters struct {
 	Authenticated bool
 	UserID        string
+	Size          int
+	LastSync      time.Time
+	LastSuccess   time.Time
+	Error         string
 }
 
 var tpl *template.Template

@@ -22,13 +22,27 @@
 </p>
 
 {{ if .Authenticated }}
-<h2>Kalender-link</h2>
+<h2>Din kalender</h2>
 <p>
-    <a href="/calendar/{{ .UserID }}">https://gemini.external.prod-gcp.nav.cloud.nais.io/calendar/{{ .UserID }}</a>
+    <a href="/calendar/{{ .UserID }}">Lenke til kalender</a> <em>(ICS, {{ .Size }} bytes)</em>
 </p>
 <p>
     Del aldri lenken med andre!
 </p>
+
+{{ if .Error }}
+<p>
+    FEIL: {{ .Error }}
+</p>
+<p>
+    Feilen oppstod: {{ .LastSync }}
+</p>
+{{ end }}
+
+<p>
+    Siste synkronisering uten feil: {{ .LastSuccess }}
+</p>
+
 {{ end }}
 
 <h2>Slik funker det</h2>
