@@ -28,7 +28,9 @@
     <a href="/calendar/{{ .UserID }}">Lenke til kalender</a> <em>(ICS, {{ .Size }} bytes)</em>
 </p>
 <p>
-    Del aldri lenken med andre!
+    Legg kalenderen inn som en <em>subscription</em>, ellers
+    <a href="https://nav-it.slack.com/archives/C60FFACN5/p1692783009054259?thread_ts=1692782265.181499&cid=C60FFACN5">går det galt</a>!
+    Lenken er personlig, del den ikke med andre.
 </p>
 
 {{ if .Error }}
@@ -41,7 +43,11 @@
 {{ end }}
 
 <p>
-    Siste synkronisering uten feil: {{ .LastSuccess }}
+    Sist synkronisert: {{ .LastSuccess }}
+</p>
+
+<p>
+    Neste synkronisering: {{ .NextSync }}
 </p>
 
 {{ end }}
@@ -77,10 +83,10 @@
     Gemini funket helt nydelig!!!"
 </blockquote>
 <blockquote>
-    Dette er jo helt fantastisk 😍
+    "Dette er jo helt fantastisk 😍"
 </blockquote>
 <blockquote>
-    Kult med Gemini 🎉! La det akkurat inn på min vanlige IOS-kalender.
+    "Kult med Gemini 🎉! La det akkurat inn på min vanlige IOS-kalender."
 </blockquote>
 
 </body>

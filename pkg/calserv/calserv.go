@@ -36,6 +36,7 @@ func (s *Server) Index(w http.ResponseWriter, r *http.Request) {
 		cache := s.store.Get(user.ID)
 		if cache != nil && cache.calendar != nil {
 			templateParams.Size = len([]byte(cache.calendar.Serialize()))
+			templateParams.NextSync = cache.nextSync
 			templateParams.LastSync = cache.lastSync
 			templateParams.LastSuccess = cache.lastSuccess
 			if cache.err != nil {

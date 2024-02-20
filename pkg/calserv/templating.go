@@ -12,6 +12,7 @@ type TemplateParameters struct {
 	Authenticated bool
 	UserID        string
 	Size          int
+	NextSync      time.Time
 	LastSync      time.Time
 	LastSuccess   time.Time
 	Error         string
