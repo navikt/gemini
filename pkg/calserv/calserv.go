@@ -51,9 +51,6 @@ func (s *Server) Index(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Errorf("BUG: template render error: %s", err)
 	}
-
-	//w.Header().Set("content-type", "text/html")
-	//fmt.Fprintf(w, `Please copy your <a href="/calendar/%s">personal calendar link</a> and subscribe to it in your calendar application.`, user.ID)
 }
 
 func (s *Server) SetCalendar(userid db.ID, calendar *CalendarCache) {

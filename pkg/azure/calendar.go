@@ -47,6 +47,13 @@ type ResponseStatus struct {
 	Response string
 }
 
+const ResponseStatusNone = "none"
+const ResponseStatusOrganizer = "organizer"
+const ResponseStatusTentativelyAccepted = "tentativelyAccepted"
+const ResponseStatusAccepted = "accepted"
+const ResponseStatusNotResponded = "notResponded"
+const ResponseStatusDeclined = "declined"
+
 type Result struct {
 	Next  string `json:"@odata.nextLink"`
 	Value Events
@@ -88,7 +95,7 @@ type Event struct {
 	Recurrence                    *PatternedRecurrence //": {"@odata.type": "microsoft.graph.patternedRecurrence"},
 	ReminderMinutesBeforeStart    int                  //": 1024,
 	ResponseRequested             bool                 //": true,
-	ResponseStatus                odata                //": {"@odata.type": "microsoft.graph.responseStatus"},
+	ResponseStatus                ResponseStatus       //": {"@odata.type": "microsoft.graph.responseStatus"},
 	Sensitivity                   string               //": "String",
 	SeriesMasterId                string               //": "string",
 	ShowAs                        string               //": "String",

@@ -1,12 +1,16 @@
 package calserv
 
 import (
+	"strings"
+
 	ics "github.com/arran4/golang-ical"
+
 	"github.com/nais/gemini/pkg/azure"
 )
 
 const almostRFCTime = "20060102T150405"
 const tz = "/Europe/Oslo"
+const geminiEmoji = "♊"
 
 func Calendar(events []azure.Event) *ics.Calendar {
 	cal := ics.NewCalendar()
@@ -36,10 +40,11 @@ func Convert(event azure.Event) *ics.VEvent {
 		e.SetProperty(ics.ComponentPropertyDtEnd, event.End.Time().Local().Format(almostRFCTime), tz)
 	}
 
+	description := ""
 	if len(event.Body.Content) > 0 && event.Body.ContentType == "text" {
-		e.SetDescription(fixText(event.Body.Content))
+		description = fixText(event.Body.Content)
 	} else if len(event.BodyPreview) > 0 {
-		e.SetDescription(fixText(event.BodyPreview))
+		description = fixText(event.BodyPreview)
 	}
 
 	e.SetLocation(event.Location.DisplayName)
@@ -51,6 +56,12 @@ func Convert(event azure.Event) *ics.VEvent {
 	for _, att := range event.Attendees {
 		e.AddAttendee(att.EmailAddress.Address)
 	}
+
+	if event.ResponseStatus.Response == azure.ResponseStatusNotResponded {
+		description = geminiEmoji + " RSVP!\n\n" + description
+	}
+
+	e.SetDescription(description)
 
 	// TODO
 	//e.AddAlarm()
