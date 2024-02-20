@@ -7,9 +7,10 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/lestrrat-go/jwx/jwt"
-	"github.com/nais/gemini/pkg/db"
 	log "github.com/sirupsen/logrus"
 	"golang.org/x/oauth2"
+
+	"github.com/nais/gemini/pkg/db"
 )
 
 const (

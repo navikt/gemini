@@ -3,8 +3,9 @@ package azure
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
+	"net/url"
 	"time"
 
 	log "github.com/sirupsen/logrus"
@@ -97,14 +98,30 @@ type Event struct {
 	MultiValueExtendedProperties  []odata              //": [ { "@odata.type": "microsoft.graph.multiValueLegacyExtendedProperty" }]
 }
 
+// List calendar events at Azure endpoint.
+//
+// The events are filtered such that they either have to be recurring events,
+// or at most six months before today.
+//
+// https://learn.microsoft.com/en-us/graph/api/group-list-events?view=graph-rest-1.0&tabs=http
 func GetCalendarEvents(client *http.Client) ([]Event, error) {
 	t := time.Now()
 
-	uri := "https://graph.microsoft.com/v1.0/me/calendar/events?$top=100"
-	resultset := make([]Event, 0, 8192)
+	const backfillDuration = time.Hour * 24 * 30 * 6
+	cutoffTime := t.Add(-backfillDuration)
+
+	values := &url.Values{}
+	values.Set("$top", "100")
+	values.Set("$filter", "(start/dateTime ge '"+cutoffTime.Format(time.RFC3339)+"') or (type eq 'seriesMaster')")
+	uri := "https://graph.microsoft.com/v1.0/me/calendar/events?" + values.Encode()
+
+	resultset := make([]Event, 0, 32)
 
 	for len(uri) > 0 {
 		log.Debugf("Fetching events from %s", uri)
+
+		// TODO: add request header for longer description, but as text
+		// Prefer: outlook.body-content-type="text"
 
 		resp, err := client.Get(uri)
 		if err != nil {
@@ -115,7 +132,7 @@ func GetCalendarEvents(client *http.Client) ([]Event, error) {
 		defer resp.Body.Close()
 
 		if resp.StatusCode != http.StatusOK {
-			body, _ := ioutil.ReadAll(resp.Body)
+			body, _ := io.ReadAll(resp.Body)
 			return nil, fmt.Errorf("API returned %s: %s", resp.Status, body)
 		}
 
