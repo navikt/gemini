@@ -7,11 +7,12 @@ import (
 	"time"
 
 	ics "github.com/arran4/golang-ical"
+	log "github.com/sirupsen/logrus"
+	"golang.org/x/oauth2"
+
 	"github.com/nais/gemini/pkg/azure"
 	"github.com/nais/gemini/pkg/db"
 	"github.com/nais/gemini/pkg/metrics"
-	log "github.com/sirupsen/logrus"
-	"golang.org/x/oauth2"
 )
 
 type Store interface {
@@ -122,7 +123,9 @@ func (f *store) fetch(userid db.ID) {
 		log.Infof("Token for user '%s' has been refreshed", user.Username)
 	}
 	if err == nil {
-		err = f.database.WriteUser(ctx, user)
+		wctx, wcancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer wcancel()
+		err = f.database.WriteUser(wctx, user)
 		if err != nil {
 			err = fmt.Errorf("could not write updated token to database: %w", err)
 		}
