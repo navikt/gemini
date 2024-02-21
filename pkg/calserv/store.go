@@ -2,6 +2,7 @@ package calserv
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"sync"
 	"time"
@@ -36,6 +37,7 @@ type CalendarCache struct {
 	userID      db.ID
 	calendar    *ics.Calendar
 	err         error
+	disabled    bool
 	lastSync    time.Time
 	lastSuccess time.Time
 	nextSync    time.Time
@@ -76,6 +78,9 @@ func (f *store) fetchOutdated() {
 	defer f.lock.Unlock()
 	log.Debugf("Synchronizing all calendars...")
 	for i := range f.cache {
+		if f.cache[i].disabled {
+			continue
+		}
 		if f.cache[i].nextSync.After(time.Now()) {
 			continue
 		}
@@ -101,6 +106,15 @@ func (f *store) fetch(userid db.ID) {
 		return
 	}
 
+	writeUser := func() {
+		wctx, wcancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer wcancel()
+		err = f.database.WriteUser(wctx, user)
+		if err != nil {
+			log.Error(err)
+		}
+	}
+
 	// Auto-refreshes token when needed
 	oldAccessToken := user.Token.AccessToken
 	src := f.oauth.TokenSource(ctx, user.Token)
@@ -110,30 +124,35 @@ func (f *store) fetch(userid db.ID) {
 
 	events, err := azure.GetCalendarEvents(client)
 	metrics.Synchronizations(err)
+
 	if err != nil {
 		log.Errorf("synchronize %s: %s", user.Username, err)
 		f.cache[userid].err = err
 		f.cache[userid].lastSync = time.Now()
 		f.cache[userid].nextSync = time.Now().Add(5 * time.Minute)
+
+		// check for expired credentials
+		var azureError *azure.ApiError
+		if errors.As(err, &azureError) && azureError != nil && azureError.ErrorIdentifier == "invalid_grant" {
+			f.cache[userid].err = azureError
+			f.cache[userid].nextSync = time.Time{}
+			f.cache[userid].disabled = true
+			log.Warnf("account %q has invalid credentials and will be disabled until next login", user.Username)
+			user.Token = nil
+			writeUser()
+		}
+
 		return
 	}
 
 	user.Token, err = src.Token()
-	if oldAccessToken != user.Token.AccessToken {
+	if err == nil && oldAccessToken != user.Token.AccessToken {
 		log.Infof("Token for user '%s' has been refreshed", user.Username)
-	}
-	if err == nil {
-		wctx, wcancel := context.WithTimeout(context.Background(), 5*time.Second)
-		defer wcancel()
-		err = f.database.WriteUser(wctx, user)
-		if err != nil {
-			err = fmt.Errorf("could not write updated token to database: %w", err)
-		}
-	}
-
-	if err != nil {
+	} else if err != nil {
 		log.Error(err)
 	}
+
+	writeUser()
 
 	now := time.Now()
 	cal := Calendar(events)
@@ -159,6 +178,7 @@ func (f *store) Add(user *db.User) {
 		userID:   user.ID,
 		err:      fmt.Errorf("not yet synchronized"),
 		nextSync: time.Now(),
+		disabled: user.Token == nil || len(user.Token.AccessToken) == 0,
 	}
 	f.ticker.Reset(1 * time.Second)
 	metrics.Users.Set(float64(len(f.cache)))

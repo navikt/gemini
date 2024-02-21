@@ -141,7 +141,7 @@ func GetCalendarEvents(client *http.Client) ([]Event, error) {
 
 		resp, err := client.Do(req)
 		if err != nil {
-			return nil, err
+			return nil, DecodeOauth2ApiError(err)
 		}
 
 		//goland:noinspection ALL
