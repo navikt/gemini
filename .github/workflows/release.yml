@@ -6,6 +6,9 @@ on:
 jobs:
 
   build:
+    permissions:
+      contents: "read"
+      id-token: "write"
     name: Build Docker container
     runs-on: ubuntu-latest
     steps:
