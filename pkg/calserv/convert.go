@@ -1,11 +1,13 @@
 package calserv
 
 import (
+	"fmt"
 	"strings"
 
 	ics "github.com/arran4/golang-ical"
 
 	"github.com/nais/gemini/pkg/azure"
+	"github.com/nais/gemini/pkg/version"
 )
 
 const almostRFCTime = "20060102T150405"
@@ -14,12 +16,20 @@ const geminiEmoji = "♊"
 
 func Calendar(events []azure.Event) *ics.Calendar {
 	cal := ics.NewCalendar()
+
+	cal.SetName("NAV")
+	cal.SetTzid(tz)
+
+	// Product identifier is supposed to say whose software made this file.
+	// Documentation: https://icalendar.org/iCalendar-RFC-5545/3-7-3-product-identifier.html
+	// "The following is an example of this property. It does not imply that English is the default language."
+	// PRODID:-//ABC Corporation//NONSGML My Product//EN
+	cal.SetProductId(fmt.Sprintf("-//nais.io//NONSGML Gemini %s//EN", version.Version()))
+
 	for _, ev := range events {
 		cal.AddVEvent(Convert(ev))
 	}
-	cal.SetName("NAV")
-	cal.SetProductId("GEMINI")
-	cal.SetTzid(tz)
+
 	return cal
 }
 
