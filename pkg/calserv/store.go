@@ -68,7 +68,7 @@ func (f *store) run() {
 			f.ticker.Reset(f.interval)
 			f.fetchOutdated()
 		case userid := <-f.queue:
-			f.fetch(userid)
+			go f.fetch(userid)
 		}
 	}
 }
