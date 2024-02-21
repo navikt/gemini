@@ -5,7 +5,7 @@ go 1.17
 require (
 	github.com/arran4/golang-ical v0.2.6
 	github.com/go-chi/chi v4.0.3+incompatible
-	github.com/google/uuid v1.3.0
+	github.com/google/uuid v1.6.0
 	github.com/jackc/pgx/v4 v4.18.1
 	github.com/lestrrat-go/jwx v1.2.28
 	github.com/prometheus/client_golang v1.11.1
