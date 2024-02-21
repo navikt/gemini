@@ -9,7 +9,7 @@ require (
 	github.com/jackc/pgx/v4 v4.18.1
 	github.com/lestrrat-go/jwx v1.2.28
 	github.com/prometheus/client_golang v1.11.1
-	github.com/sirupsen/logrus v1.8.1
+	github.com/sirupsen/logrus v1.9.3
 	golang.org/x/oauth2 v0.0.0-20211104180415-d3ed0bb246c8
 )
 
