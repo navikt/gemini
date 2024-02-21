@@ -3,7 +3,7 @@ module github.com/nais/gemini
 go 1.17
 
 require (
-	github.com/arran4/golang-ical v0.0.0-20211212012649-32b67e209c4f
+	github.com/arran4/golang-ical v0.2.6
 	github.com/go-chi/chi v4.0.3+incompatible
 	github.com/google/uuid v1.3.0
 	github.com/jackc/pgx/v4 v4.14.1
