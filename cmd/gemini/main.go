@@ -11,14 +11,15 @@ import (
 	"time"
 
 	"github.com/go-chi/chi"
-	"github.com/nais/gemini/pkg/authserv"
-	"github.com/nais/gemini/pkg/calserv"
-	"github.com/nais/gemini/pkg/db"
-	"github.com/nais/gemini/pkg/version"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	log "github.com/sirupsen/logrus"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/microsoft"
+
+	"github.com/nais/gemini/pkg/authserv"
+	"github.com/nais/gemini/pkg/calserv"
+	"github.com/nais/gemini/pkg/db"
+	"github.com/nais/gemini/pkg/version"
 )
 
 func main() {
@@ -177,7 +178,7 @@ func dbURLWithConnectionLimit(dsn string, limit int) (string, error) {
 		return dsn, err
 	}
 	q := dburl.Query()
-	q.Add("pool_max_conns", strconv.Itoa(1))
+	q.Add("pool_max_conns", strconv.Itoa(limit))
 	dburl.RawQuery = q.Encode()
 	return dburl.String(), nil
 }
