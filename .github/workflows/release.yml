@@ -1,10 +1,7 @@
-name: NAIS deploy release pipeline
+name: Gemini release pipeline
 
 on:
   push: {}
-
-env:
-  image: ghcr.io/${{ github.repository }}/gemini
 
 jobs:
 
@@ -13,17 +10,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
-    - name: Generate version tag
-      run: echo "version=$(./version.sh)" >> $GITHUB_ENV
-    - name: Build Docker image
-      run: docker build --tag ${image}:${version} --tag ${image}:latest .
-    - name: Push versioned Docker image to GitHub
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      run: |
-        docker login ghcr.io -u ${GITHUB_REPOSITORY} -p ${GITHUB_TOKEN}
-        docker push ${image}:${version}
-        docker push ${image}:latest
+    - name: Build and push Docker image
+      uses: nais/docker-build-push@v0
+      id: docker-push
+      with:
+        team: aura
 
   deploy:
     name: Deploy to NAIS
@@ -32,11 +23,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - name: Generate version tag
-        run: echo "version=$(./version.sh)" >> $GITHUB_ENV
       - uses: nais/deploy/actions/deploy@v1
         env:
           APIKEY: ${{ secrets.NAIS_DEPLOY_APIKEY }}
           CLUSTER: prod-gcp
           RESOURCE: nais.yaml
-          VAR: image=${{ env.image }}:${{ env.version }}
+          VAR: image=${{ steps.docker-push.outputs.image }}
