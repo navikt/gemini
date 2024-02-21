@@ -126,7 +126,6 @@ func run() error {
 		case sig := <-sigs:
 			log.Infof("received signal %s; shutting down...", sig)
 			cancel()
-		default:
 		}
 	}
 
