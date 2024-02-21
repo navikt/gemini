@@ -12,7 +12,7 @@ jobs:
     name: Build Docker container
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - name: Generate version tag
         run: echo "version=$(./version.sh)" >> $GITHUB_ENV
       - name: Build Docker image
@@ -32,7 +32,7 @@ jobs:
     if: github.ref == 'refs/heads/master'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - name: Generate version tag
         run: echo "version=$(./version.sh)" >> $GITHUB_ENV
       - uses: nais/deploy/actions/deploy@v1
