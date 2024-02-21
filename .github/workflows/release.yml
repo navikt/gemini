@@ -35,7 +35,7 @@ jobs:
       - uses: actions/checkout@v4
       - name: Generate version tag
         run: echo "version=$(./version.sh)" >> $GITHUB_ENV
-      - uses: nais/deploy/actions/deploy@v2
+      - uses: nais/deploy/actions/deploy@v1
         env:
           APIKEY: ${{ secrets.NAIS_DEPLOY_APIKEY }}
           CLUSTER: prod-gcp
