@@ -2,6 +2,8 @@ package config
 
 import (
 	"github.com/kelseyhightower/envconfig"
+	"golang.org/x/oauth2"
+	"golang.org/x/oauth2/microsoft"
 )
 
 type Config struct {
@@ -19,4 +21,17 @@ func FromEnvironment() (*Config, error) {
 	cfg := &Config{}
 	err := envconfig.Process("", cfg)
 	return cfg, err
+}
+
+func (cfg *Config) OAuthConfig() *oauth2.Config {
+	return &oauth2.Config{
+		ClientID:     cfg.AzureClientID,
+		ClientSecret: cfg.AzureClientSecret,
+		Endpoint:     microsoft.AzureADEndpoint(cfg.AzureEndpoint),
+		RedirectURL:  cfg.AzureRedirectURL,
+		Scopes: []string{
+			"Calendars.Read",
+			"offline_access",
+		},
+	}
 }

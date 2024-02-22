@@ -13,8 +13,6 @@ import (
 	"github.com/go-chi/chi"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	log "github.com/sirupsen/logrus"
-	"golang.org/x/oauth2"
-	"golang.org/x/oauth2/microsoft"
 
 	"github.com/nais/gemini/pkg/authserv"
 	"github.com/nais/gemini/pkg/calserv"
@@ -54,17 +52,6 @@ func run() error {
 		return fmt.Errorf("configuration error: %w", err)
 	}
 
-	oauthconf := &oauth2.Config{
-		ClientID:     cfg.AzureClientID,
-		ClientSecret: cfg.AzureClientSecret,
-		Endpoint:     microsoft.AzureADEndpoint(cfg.AzureEndpoint),
-		RedirectURL:  cfg.AzureRedirectURL,
-		Scopes: []string{
-			"Calendars.Read",
-			"offline_access",
-		},
-	}
-
 	// hack required for tiny cloud sql instances
 	if len(cfg.DatabaseURL) > 0 && cfg.DatabaseConnectionLimit > 0 {
 		cfg.DatabaseURL, err = dbURLWithConnectionLimit(cfg.DatabaseURL, cfg.DatabaseConnectionLimit)
@@ -80,6 +67,7 @@ func run() error {
 
 	log.Infof("Database connection ready.")
 
+	oauthconf := cfg.OAuthConfig()
 	store := calserv.NewStore(ctx, database, oauthconf, syncInterval, lifetime)
 	validator := authserv.SessionIDMiddleware(database)
 	srv := calserv.NewServer(database, store)
