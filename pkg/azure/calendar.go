@@ -111,21 +111,24 @@ type Event struct {
 	MultiValueExtendedProperties  []odata              //": [ { "@odata.type": "microsoft.graph.multiValueLegacyExtendedProperty" }]
 }
 
+// How long into the past and future do we peek?
+const backfillDuration = time.Hour * 24 * 30 * 2
+const forwardfillDuration = time.Hour * 24 * 365
+
 // List calendar events at Azure endpoint.
 //
 // The events are filtered such that they either have to be recurring events,
 // or at most two months before today.
 //
 // https://learn.microsoft.com/en-us/graph/api/group-list-events?view=graph-rest-1.0&tabs=http
-func GetCalendarEvents(client *http.Client) ([]Event, error) {
+func listCalendarEvents(client *http.Client) ([]Event, error) {
 	t := time.Now()
 
-	const backfillDuration = time.Hour * 24 * 30 * 2
 	cutoffTime := t.Add(-backfillDuration)
 
 	values := &url.Values{}
 	values.Set("$top", "100")
-	values.Set("$filter", "(start/dateTime ge '"+cutoffTime.Format(time.RFC3339)+"') or (type eq 'seriesMaster')")
+	values.Set("$filter", "(end/dateTime ge '"+cutoffTime.Format(time.RFC3339)+"') or (type eq 'seriesMaster')")
 	uri := "https://graph.microsoft.com/v1.0/me/calendar/events?" + values.Encode()
 
 	resultset := make([]Event, 0, 32)
@@ -166,4 +169,32 @@ func GetCalendarEvents(client *http.Client) ([]Event, error) {
 	defer log.Debugf("Fetched %d events in %s", len(resultset), time.Since(t))
 
 	return resultset, nil
+}
+
+func GetCalendarEvents(client *http.Client) ([]Event, error) {
+	events, err := listCalendarEvents(client)
+	if err != nil {
+		return events, err
+	}
+
+	results := make([]Event, 0, len(events))
+
+	// After the events have been fetched, they must be enriched,
+	// in order to know if instances of a recurring event has been cancelled.
+	for _, event := range events {
+		if event.Type != "seriesMaster" {
+			results = append(results, event)
+			continue
+		}
+
+		instances, err := GetRecurringEventInstances(client, event.Id)
+		if err != nil {
+			return nil, err
+		}
+
+		log.Debugf("%2d instances of %s", len(instances), event.Id)
+		results = append(results, instances...)
+	}
+
+	return results, err
 }
