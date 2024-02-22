@@ -4,10 +4,8 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"net/url"
 	"os"
 	"os/signal"
-	"strconv"
 	"time"
 
 	"github.com/go-chi/chi"
@@ -52,14 +50,6 @@ func run() error {
 		return fmt.Errorf("configuration error: %w", err)
 	}
 
-	// hack required for tiny cloud sql instances
-	if len(cfg.DatabaseURL) > 0 && cfg.DatabaseConnectionLimit > 0 {
-		cfg.DatabaseURL, err = dbURLWithConnectionLimit(cfg.DatabaseURL, cfg.DatabaseConnectionLimit)
-		if err != nil {
-			return fmt.Errorf("add connection limit to database url: %w", err)
-		}
-	}
-
 	database, err := setupDatabase(cfg.DatabaseURL)
 	if err != nil {
 		return err
@@ -69,9 +59,9 @@ func run() error {
 
 	oauthconf := cfg.OAuthConfig()
 	store := calserv.NewStore(ctx, database, oauthconf, syncInterval, lifetime)
-	validator := authserv.SessionIDMiddleware(database)
 	srv := calserv.NewServer(database, store)
 	auth := authserv.NewServer(oauthconf, cfg.AzureClientID, database)
+	validator := authserv.SessionIDMiddleware(database)
 	router := setupRouter(srv, auth, validator)
 
 	users, err := database.Users(ctx)
@@ -145,16 +135,4 @@ func setupRouter(srv *calserv.Server, auth *authserv.Server, validator func(http
 	r.HandleFunc("/calendar/{userid}", srv.Calendar)
 
 	return r
-}
-
-func dbURLWithConnectionLimit(dsn string, limit int) (string, error) {
-	// hack to limit connections to database
-	dburl, err := url.Parse(dsn)
-	if err != nil {
-		return dsn, err
-	}
-	q := dburl.Query()
-	q.Add("pool_max_conns", strconv.Itoa(limit))
-	dburl.RawQuery = q.Encode()
-	return dburl.String(), nil
 }
