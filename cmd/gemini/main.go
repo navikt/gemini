@@ -18,6 +18,7 @@ import (
 
 	"github.com/nais/gemini/pkg/authserv"
 	"github.com/nais/gemini/pkg/calserv"
+	"github.com/nais/gemini/pkg/config"
 	"github.com/nais/gemini/pkg/db"
 	"github.com/nais/gemini/pkg/version"
 )
@@ -48,28 +49,16 @@ func run() error {
 	sigs := make(chan os.Signal, 1)
 	signal.Notify(sigs, os.Interrupt)
 
-	clientid := os.Getenv("AZURE_APP_CLIENT_ID")
-	dsn := os.Getenv("DATABASE_URL")
-	bindAddress := os.Getenv("BIND_ADDRESS")
-	metricsBindAddress := os.Getenv("METRICS_BIND_ADDRESS")
-	connLimitStr := os.Getenv("DATABASE_CONNECTION_LIMIT")
-	if len(bindAddress) == 0 {
-		bindAddress = "127.0.0.1:3000"
-	}
-	if len(metricsBindAddress) == 0 {
-		metricsBindAddress = "127.0.0.1:3001"
-	}
-
-	connLimit, err := strconv.Atoi(connLimitStr)
+	cfg, err := config.FromEnvironment()
 	if err != nil {
-		connLimit = 0
+		return fmt.Errorf("configuration error: %w", err)
 	}
 
 	oauthconf := &oauth2.Config{
-		ClientID:     clientid,
-		ClientSecret: os.Getenv("AZURE_APP_CLIENT_SECRET"),
-		Endpoint:     microsoft.AzureADEndpoint(os.Getenv("AZURE_APP_TENANT_ID")),
-		RedirectURL:  os.Getenv("REDIRECT_URL"),
+		ClientID:     cfg.AzureClientID,
+		ClientSecret: cfg.AzureClientSecret,
+		Endpoint:     microsoft.AzureADEndpoint(cfg.AzureEndpoint),
+		RedirectURL:  cfg.AzureRedirectURL,
 		Scopes: []string{
 			"Calendars.Read",
 			"offline_access",
@@ -77,14 +66,14 @@ func run() error {
 	}
 
 	// hack required for tiny cloud sql instances
-	if len(dsn) > 0 && connLimit > 0 {
-		dsn, err = dbURLWithConnectionLimit(dsn, connLimit)
+	if len(cfg.DatabaseURL) > 0 && cfg.DatabaseConnectionLimit > 0 {
+		cfg.DatabaseURL, err = dbURLWithConnectionLimit(cfg.DatabaseURL, cfg.DatabaseConnectionLimit)
 		if err != nil {
 			return fmt.Errorf("add connection limit to database url: %w", err)
 		}
 	}
 
-	database, err := setupDatabase(dsn)
+	database, err := setupDatabase(cfg.DatabaseURL)
 	if err != nil {
 		return err
 	}
@@ -94,7 +83,7 @@ func run() error {
 	store := calserv.NewStore(ctx, database, oauthconf, syncInterval, lifetime)
 	validator := authserv.SessionIDMiddleware(database)
 	srv := calserv.NewServer(database, store)
-	auth := authserv.NewServer(oauthconf, clientid, database)
+	auth := authserv.NewServer(oauthconf, cfg.AzureClientID, database)
 	router := setupRouter(srv, auth, validator)
 
 	users, err := database.Users(ctx)
@@ -106,13 +95,13 @@ func run() error {
 	}
 
 	go func() {
-		err := http.ListenAndServe(bindAddress, router)
+		err := http.ListenAndServe(cfg.BindAddress, router)
 		log.Errorf("http server has stopped: %s", err)
 		cancel()
 	}()
 
 	go func() {
-		err := http.ListenAndServe(metricsBindAddress, promhttp.Handler())
+		err := http.ListenAndServe(cfg.MetricsBindAddress, promhttp.Handler())
 		log.Errorf("metrics server has stopped: %s", err)
 		cancel()
 	}()
