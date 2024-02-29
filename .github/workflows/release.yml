@@ -12,7 +12,7 @@ jobs:
     name: Build Docker container
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
     - name: Build and push Docker image
       uses: nais/docker-build-push@v0
       id: docker-push
@@ -22,13 +22,16 @@ jobs:
         identity_provider: ${{ secrets.NAIS_WORKLOAD_IDENTITY_PROVIDER }}
 
   deploy:
+    permissions:
+      contents: "read"
+      id-token: "write"
     name: Deploy to NAIS
     needs: build
     if: github.ref == 'refs/heads/master'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - uses: nais/deploy/actions/deploy@v1
+      - uses: actions/checkout@v4
+      - uses: nais/deploy/actions/deploy@v2
         env:
           APIKEY: ${{ secrets.NAIS_DEPLOY_APIKEY }}
           CLUSTER: prod-gcp
