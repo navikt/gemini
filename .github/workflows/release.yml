@@ -28,6 +28,8 @@ jobs:
           echo "digest=$(docker images --no-trunc --quiet ${image}:${version})" >> $GITHUB_ENV
       - uses: nais/attest-sign@v1
         name: Attest and sign SBOM
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           image_ref: ${{ env.image }}@${{ env.digest }}
 
