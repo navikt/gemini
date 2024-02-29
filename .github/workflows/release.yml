@@ -29,7 +29,7 @@ jobs:
       - uses: nais/attest-sign@v1
         name: Attest and sign SBOM
         with:
-          image_ref: ${image}@${digest}
+          image_ref: ${{ env.image }}@${{ env.digest }}
 
   deploy:
     name: Deploy to NAIS
