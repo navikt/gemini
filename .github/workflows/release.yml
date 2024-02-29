@@ -4,7 +4,6 @@ on:
   push: {}
 
 jobs:
-
   build:
     permissions:
       contents: "read"
@@ -20,19 +19,10 @@ jobs:
         team: aura
         project_id: ${{ vars.NAIS_MANAGEMENT_PROJECT_ID }}
         identity_provider: ${{ secrets.NAIS_WORKLOAD_IDENTITY_PROVIDER }}
-
-  deploy:
-    permissions:
-      contents: "read"
-      id-token: "write"
-    name: Deploy to NAIS
-    needs: build
-    if: github.ref == 'refs/heads/master'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: nais/deploy/actions/deploy@v2
-        env:
-          CLUSTER: prod-gcp
-          RESOURCE: nais.yaml
-          VAR: image=${{ steps.docker-push.outputs.image }}
+    - name: Deploy to NAIS cluster
+      uses: nais/deploy/actions/deploy@v2
+      if: github.ref == 'refs/heads/master'
+      env:
+        CLUSTER: prod-gcp
+        RESOURCE: nais.yaml
+        VAR: image=${{ steps.docker-push.outputs.image }}
