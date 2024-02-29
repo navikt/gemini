@@ -25,10 +25,11 @@ jobs:
           docker login ghcr.io -u ${GITHUB_REPOSITORY} -p ${GITHUB_TOKEN}
           docker push ${image}:${version}
           docker push ${image}:latest
+          echo "digest=$(docker images --no-trunc --quiet ${image}:${version})" >> $GITHUB_ENV
       - uses: nais/attest-sign@v1
         name: Attest and sign SBOM
         with:
-          image_ref: ${image}:${version}
+          image_ref: ${image}@${digest}
 
   deploy:
     name: Deploy to NAIS
