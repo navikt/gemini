@@ -1,12 +1,13 @@
 module github.com/nais/gemini
 
-go 1.17
+go 1.21
 
 require (
 	github.com/arran4/golang-ical v0.2.6
 	github.com/go-chi/chi v4.0.3+incompatible
 	github.com/google/uuid v1.6.0
 	github.com/jackc/pgx/v4 v4.18.1
+	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/lestrrat-go/jwx v1.2.28
 	github.com/prometheus/client_golang v1.11.1
 	github.com/sirupsen/logrus v1.9.3
@@ -27,7 +28,6 @@ require (
 	github.com/jackc/pgservicefile v0.0.0-20221227161230-091c0ba34f0a // indirect
 	github.com/jackc/pgtype v1.14.0 // indirect
 	github.com/jackc/puddle v1.3.0 // indirect
-	github.com/kelseyhightower/envconfig v1.4.0 // indirect
 	github.com/lestrrat-go/backoff/v2 v2.0.8 // indirect
 	github.com/lestrrat-go/blackmagic v1.0.2 // indirect
 	github.com/lestrrat-go/httpcc v1.0.1 // indirect
