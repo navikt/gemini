@@ -124,6 +124,7 @@ func setupRouter(srv *calserv.Server, auth *authserv.Server, validator func(http
 
 	r.Route("/oauth2", func(r chi.Router) {
 		r.HandleFunc("/login", auth.Login)
+		r.HandleFunc("/logout", auth.Logout)
 		r.HandleFunc("/callback", auth.Callback)
 	})
 

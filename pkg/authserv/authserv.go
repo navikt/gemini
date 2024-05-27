@@ -55,6 +55,18 @@ func (s *Server) Login(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, uri, http.StatusTemporaryRedirect)
 }
 
+func (s *Server) Logout(w http.ResponseWriter, r *http.Request) {
+	cookie := &http.Cookie{
+		Name:     SessionCookieName,
+		Path:     "/",
+		Expires:  time.Time{},
+		HttpOnly: true,
+	}
+
+	http.SetCookie(w, cookie)
+	http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
+}
+
 func (s *Server) Callback(w http.ResponseWriter, r *http.Request) {
 	cookie, err := r.Cookie(StateCookieName)
 	if err != nil {
