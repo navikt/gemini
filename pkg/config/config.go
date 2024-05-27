@@ -18,7 +18,7 @@ type Config struct {
 	DatabaseConnectionLimit int    `envconfig:"DATABASE_CONNECTION_LIMIT" default:"1"`
 	AzureClientSecret       string `envconfig:"AZURE_APP_CLIENT_SECRET" required:"true"`
 	AzureEndpoint           string `envconfig:"AZURE_APP_TENANT_ID" required:"true"`
-	AzureRedirectURL        string `envconfig:"REDIRECT_URL" default:"http://localhost:3000/oauth/callback"`
+	AzureRedirectURL        string `envconfig:"REDIRECT_URL" default:"http://localhost:3000/oauth2/callback"`
 }
 
 func FromEnvironment() (*Config, error) {
