@@ -108,6 +108,7 @@ func (s *Server) Callback(w http.ResponseWriter, r *http.Request) {
 
 	sessionID, err := s.database.Lookup(r.Context(), username.(string))
 	if err != nil {
+		// If user is not found, create a new one.
 		sessionID, err = db.NewID()
 		if err != nil {
 			log.Errorf("unable to generate new ID for user: %s", err)
@@ -119,6 +120,22 @@ func (s *Server) Callback(w http.ResponseWriter, r *http.Request) {
 			Username: username.(string),
 			Token:    token,
 		}
+		err = s.database.WriteUser(r.Context(), user)
+		if err != nil {
+			log.Errorf("unable to store user in database: %s", err)
+			http.Error(w, "internal error, please try again later", http.StatusInternalServerError)
+			return
+		}
+	} else {
+		// Update existing user's access token.
+		user, err := s.database.GetUser(r.Context(), sessionID)
+		if err != nil {
+			log.Errorf("unable to get user from database: %s", err)
+			http.Error(w, "internal error, please try again later", http.StatusInternalServerError)
+			return
+		}
+
+		user.Token = token
 		err = s.database.WriteUser(r.Context(), user)
 		if err != nil {
 			log.Errorf("unable to store user in database: %s", err)
