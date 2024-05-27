@@ -87,8 +87,10 @@ func (s *Server) Callback(w http.ResponseWriter, r *http.Request) {
 
 	// Delete state cookie
 	cookie = &http.Cookie{
-		Name:   StateCookieName,
-		MaxAge: -1,
+		Name:     StateCookieName,
+		Path:     "/",
+		Expires:  time.Time{},
+		HttpOnly: true,
 	}
 	http.SetCookie(w, cookie)
 
@@ -131,8 +133,6 @@ func (s *Server) Callback(w http.ResponseWriter, r *http.Request) {
 		Path:     "/",
 		Expires:  time.Now().Add(1440 * time.Hour),
 		HttpOnly: true,
-		//Secure:     false,
-		//SameSite:   0,
 	}
 
 	http.SetCookie(w, cookie)
