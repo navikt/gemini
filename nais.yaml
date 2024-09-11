@@ -18,6 +18,8 @@ spec:
       value: 0.0.0.0:3001
     - name: TZ
       value: Europe/Oslo
+    - name: TELEMETRY_YOLO
+      value: {{telemetry}}
   azure:
     application:
       allowAllUsers: true

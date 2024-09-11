@@ -25,4 +25,4 @@ jobs:
       env:
         CLUSTER: prod-gcp
         RESOURCE: nais.yaml
-        VAR: image=${{ steps.docker-push.outputs.image }}
+        VAR: image=${{ steps.docker-push.outputs.image }},telemetry=${{ steps.docker-push.outputs.telemetry }}
