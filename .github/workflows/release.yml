@@ -13,7 +13,7 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - name: Build and push Docker image
-      uses: nais/docker-build-push@main
+      uses: nais/docker-build-push@v0
       id: docker-push
       with:
         team: aura
@@ -25,4 +25,5 @@ jobs:
       env:
         CLUSTER: prod-gcp
         RESOURCE: nais.yaml
-        VAR: image=${{ steps.docker-push.outputs.image }},telemetry=${{ steps.docker-push.outputs.telemetry }}
+        VAR: image=${{ steps.docker-push.outputs.image }}
+        TELEMETRY: ${{ steps.docker-push.outputs.telemetry }}
