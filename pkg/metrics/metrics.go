@@ -71,6 +71,7 @@ var (
 
 func init() {
 	prometheus.MustRegister(users)
+	prometheus.MustRegister(queueSize)
 	prometheus.MustRegister(synchronizations)
 	prometheus.MustRegister(databaseQueries)
 
