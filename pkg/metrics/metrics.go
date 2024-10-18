@@ -12,18 +12,36 @@ const (
 )
 
 const (
+	LabelActive = "active"
+	ActiveYes   = "true"
+	ActiveNo    = "false"
+
 	LabelStatus = "status"
 	StatusOK    = "ok"
 	StatusError = "error"
 )
 
 var (
-	Users = prometheus.NewGauge(prometheus.GaugeOpts{
-		Name:      "users",
-		Help:      "number of managed users",
-		Namespace: namespace,
-		Subsystem: subsystem,
-	})
+	users = prometheus.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Name:      "users",
+			Help:      "number of managed users",
+			Namespace: namespace,
+			Subsystem: subsystem,
+		},
+		[]string{
+			LabelActive,
+		},
+	)
+
+	queueSize = prometheus.NewGauge(
+		prometheus.GaugeOpts{
+			Name:      "queue_size",
+			Help:      "number of calendar synchronizations in queue",
+			Namespace: namespace,
+			Subsystem: subsystem,
+		},
+	)
 
 	synchronizations = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
@@ -52,7 +70,7 @@ var (
 )
 
 func init() {
-	prometheus.MustRegister(Users)
+	prometheus.MustRegister(users)
 	prometheus.MustRegister(synchronizations)
 	prometheus.MustRegister(databaseQueries)
 
@@ -77,9 +95,23 @@ func Synchronizations(err error) {
 	}).Inc()
 }
 
+func Users(active, inactive int) {
+	users.With(prometheus.Labels{
+		LabelActive: ActiveYes,
+	}).Set(float64(active))
+
+	users.With(prometheus.Labels{
+		LabelActive: ActiveNo,
+	}).Set(float64(inactive))
+}
+
 func DatabaseQuery(t time.Time, err error) {
 	elapsed := time.Since(t)
 	databaseQueries.With(prometheus.Labels{
 		LabelStatus: statusLabel(err),
 	}).Observe(elapsed.Seconds())
+}
+
+func QueueSize(length int) {
+	queueSize.Set(float64(length))
 }

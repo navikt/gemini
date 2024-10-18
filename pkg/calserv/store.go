@@ -71,7 +71,8 @@ func (f *store) run() {
 			f.timer.Reset(f.interval)
 			f.fetchOutdated()
 		case userid := <-f.queue:
-			go f.fetch(userid)
+			metrics.QueueSize(len(f.queue))
+			f.fetch(userid)
 		}
 	}
 }
@@ -92,7 +93,10 @@ func (f *store) fetchOutdated() {
 		f.queue <- f.cache[i].userID
 		queued++
 	}
-	log.Debugf("All eligible calendars queued for synchronization (total of %d).", queued)
+	active, inactive := f.userCount()
+	metrics.Users(active, inactive)
+	metrics.QueueSize(len(f.queue))
+	log.Debugf("All eligible calendars queued for synchronization (total of %d, vs %d active and %d inactive users).", queued, active, inactive)
 }
 
 func (f *store) fetch(userid db.ID) {
@@ -189,7 +193,23 @@ func (f *store) Add(user *db.User) {
 		disabled: user.Token == nil || len(user.Token.AccessToken) == 0,
 	}
 	f.timer.Reset(1 * time.Second)
-	metrics.Users.Set(float64(len(f.cache)))
+	active, inactive := f.userCount()
+	metrics.Users(active, inactive)
+}
+
+func (f *store) userCount() (active, inactive int) {
+	for _, user := range f.cache {
+		if user == nil {
+			inactive++
+			continue
+		}
+		if user.disabled {
+			inactive++
+		} else {
+			active++
+		}
+	}
+	return
 }
 
 func (f *store) Get(userid db.ID) *CalendarCache {
