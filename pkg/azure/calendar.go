@@ -112,8 +112,8 @@ type Event struct {
 }
 
 // How long into the past and future do we peek?
-const backfillDuration = time.Hour * 24 * 30 * 2
-const forwardfillDuration = time.Hour * 24 * 365
+const backfillDuration = time.Hour * 24 * 30 * 2 // two months
+const forwardfillDuration = time.Hour * 24 * 365 // one year
 
 // List calendar events at Azure endpoint.
 //
@@ -134,7 +134,7 @@ func listCalendarEvents(client *http.Client) ([]Event, error) {
 	resultset := make([]Event, 0, 32)
 
 	for len(uri) > 0 {
-		log.Debugf("Fetching events from %s", uri)
+		log.Tracef("Fetching events from %s", uri)
 
 		req, err := http.NewRequest(http.MethodGet, uri, nil)
 		if err != nil {
@@ -190,6 +190,10 @@ func GetCalendarEvents(client *http.Client) ([]Event, error) {
 		instances, err := GetRecurringEventInstances(client, event.Id)
 		if err != nil {
 			return nil, err
+		}
+
+		if len(instances) == 0 {
+			continue
 		}
 
 		log.Debugf("%2d instances of %s", len(instances), event.Id)

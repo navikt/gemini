@@ -40,6 +40,7 @@ func (s *Server) Index(w http.ResponseWriter, r *http.Request) {
 			templateParams.NextSync = cache.nextSync.Truncate(time.Second)
 			templateParams.LastSync = cache.lastSync.Truncate(time.Second)
 			templateParams.LastSuccess = cache.lastSuccess.Truncate(time.Second)
+			templateParams.Disabled = cache.disabled
 			if cache.err != nil {
 				templateParams.Error = cache.err.Error()
 			}

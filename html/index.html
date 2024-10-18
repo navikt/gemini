@@ -82,6 +82,13 @@
 </p>
 {{ end }}
 
+{{ if .Disabled }}
+<p>
+    Kalenderen din blir ikke lengre synkronisert, antakelig fordi tokenet har utløpt.
+    Prøv å <a href="/oauth2/logout">logge ut</a> og deretter inn igjen.
+</p>
+{{ end }}
+
 <p>
     Sist synkronisert: {{ .LastSuccess }}
 </p>

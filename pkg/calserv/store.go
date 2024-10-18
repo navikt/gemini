@@ -21,29 +21,32 @@ type Store interface {
 	Get(userid db.ID) *CalendarCache
 }
 
+// Asynchronous calendar fetcher.
 type store struct {
 	ctx      context.Context
 	database db.Database
 	lock     sync.Mutex
 	queue    chan db.ID
 	cache    map[db.ID]*CalendarCache
-	ticker   *time.Ticker
+	timer    *time.Timer
 	interval time.Duration
 	lifetime time.Duration
 	oauth    *oauth2.Config
 }
 
+// The translated version of a single user's calendar,
+// together with metadata about its last synchronization.
 type CalendarCache struct {
 	userID      db.ID
 	calendar    *ics.Calendar
 	err         error
-	disabled    bool
+	disabled    bool // sync disabled for some reason, usually expired credentials
 	lastSync    time.Time
 	lastSuccess time.Time
 	nextSync    time.Time
 }
 
-func NewStore(ctx context.Context, database db.Database, oauth *oauth2.Config, interval, lifetime time.Duration) *store {
+func NewStore(ctx context.Context, database db.Database, oauth *oauth2.Config, interval, lifetime time.Duration) Store {
 	f := &store{
 		cache:    make(map[db.ID]*CalendarCache),
 		ctx:      ctx,
@@ -52,7 +55,7 @@ func NewStore(ctx context.Context, database db.Database, oauth *oauth2.Config, i
 		lifetime: lifetime,
 		oauth:    oauth,
 		queue:    make(chan db.ID, 1024),
-		ticker:   time.NewTicker(interval),
+		timer:    time.NewTimer(interval),
 	}
 	go f.run()
 	return f
@@ -64,8 +67,8 @@ func (f *store) run() {
 		case <-f.ctx.Done():
 			log.Debugf("Store shutting down")
 			return
-		case <-f.ticker.C:
-			f.ticker.Reset(f.interval)
+		case <-f.timer.C:
+			f.timer.Reset(f.interval)
 			f.fetchOutdated()
 		case userid := <-f.queue:
 			go f.fetch(userid)
@@ -74,9 +77,10 @@ func (f *store) run() {
 }
 
 func (f *store) fetchOutdated() {
+	queued := 0
 	f.lock.Lock()
 	defer f.lock.Unlock()
-	log.Debugf("Synchronizing all calendars...")
+	log.Debugf("Queueing all calendars for synchronization...")
 	for i := range f.cache {
 		if f.cache[i].disabled {
 			continue
@@ -86,11 +90,15 @@ func (f *store) fetchOutdated() {
 		}
 		f.cache[i].nextSync = time.Time{}
 		f.queue <- f.cache[i].userID
+		queued++
 	}
-	log.Debugf("Finished calendar synchronization.")
+	log.Debugf("All eligible calendars queued for synchronization (total of %d).", queued)
 }
 
 func (f *store) fetch(userid db.ID) {
+	f.lock.Lock()
+	defer f.lock.Unlock()
+
 	if f.cache[userid] == nil {
 		panic("BUG: fetching an unregistered calendar")
 	}
@@ -180,7 +188,7 @@ func (f *store) Add(user *db.User) {
 		nextSync: time.Now(),
 		disabled: user.Token == nil || len(user.Token.AccessToken) == 0,
 	}
-	f.ticker.Reset(1 * time.Second)
+	f.timer.Reset(1 * time.Second)
 	metrics.Users.Set(float64(len(f.cache)))
 }
 
