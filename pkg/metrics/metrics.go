@@ -55,6 +55,18 @@ var (
 		},
 	)
 
+	requests = prometheus.NewHistogramVec(
+		prometheus.HistogramOpts{
+			Name:      "requests",
+			Help:      "calendar requests",
+			Namespace: namespace,
+			Subsystem: subsystem,
+		},
+		[]string{
+			LabelStatus,
+		},
+	)
+
 	databaseQueries = prometheus.NewHistogramVec(
 		prometheus.HistogramOpts{
 			Name:      "database_queries",
@@ -72,6 +84,7 @@ var (
 func init() {
 	prometheus.MustRegister(users)
 	prometheus.MustRegister(queueSize)
+	prometheus.MustRegister(requests)
 	prometheus.MustRegister(synchronizations)
 	prometheus.MustRegister(databaseQueries)
 
@@ -115,4 +128,13 @@ func DatabaseQuery(t time.Time, err error) {
 
 func QueueSize(length int) {
 	queueSize.Set(float64(length))
+}
+
+func Request(t time.Time, success bool) {
+	duration := time.Since(t)
+	if success {
+		requests.WithLabelValues(StatusOK).Observe(duration.Seconds())
+	} else {
+		requests.WithLabelValues(StatusError).Observe(duration.Seconds())
+	}
 }

@@ -69,6 +69,10 @@ func (f *store) run() {
 			return
 		case <-f.timer.C:
 			f.timer.Reset(f.interval)
+			if len(f.queue) > 0 {
+				// skip adding items to queue if queue has any items
+				continue
+			}
 			f.fetchOutdated()
 		case userid := <-f.queue:
 			metrics.QueueSize(len(f.queue))

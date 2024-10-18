@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/go-chi/chi"
+	"github.com/nais/gemini/pkg/metrics"
 	log "github.com/sirupsen/logrus"
 
 	"github.com/nais/gemini/pkg/db"
@@ -61,20 +62,24 @@ func (s *Server) SetCalendar(userid db.ID, calendar *CalendarCache) {
 }
 
 func (s *Server) Calendar(w http.ResponseWriter, r *http.Request) {
+	requestStart := time.Now()
+
 	userID := db.ID(chi.URLParam(r, "userid"))
 
 	cache := s.store.Get(userID)
 
 	if cache == nil {
 		w.WriteHeader(http.StatusNotFound)
-		fmt.Fprintf(w, "Calendar does not exist. Please go to the index page and get your personal calendar URL.")
+		_, _ = fmt.Fprintf(w, "Calendar does not exist. Please go to the index page and get your personal calendar URL.")
+		metrics.Request(requestStart, false)
 		return
 	}
 
 	if cache.err != nil {
 		log.Error(cache.err)
 		w.WriteHeader(http.StatusServiceUnavailable)
-		fmt.Fprintf(w, "calendar is unavailable: %s", cache.err)
+		_, _ = fmt.Fprintf(w, "calendar is unavailable: %s", cache.err)
+		metrics.Request(requestStart, false)
 		return
 	}
 
@@ -84,5 +89,7 @@ func (s *Server) Calendar(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Cache-Control", "no-cache")
 	w.WriteHeader(http.StatusOK)
 
-	w.Write(payload)
+	_, err := w.Write(payload)
+
+	metrics.Request(requestStart, err == nil)
 }
