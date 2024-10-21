@@ -112,7 +112,7 @@ func (f *store) run() {
 		// so we may run concurrently.
 		case userid := <-f.fetchQueue:
 			jobs++
-			go f.fetchAndEnqueue(userid)
+			go f.fetchAndEnqueue(f.ctx, userid)
 		}
 
 		metrics.QueueSize(jobs)
@@ -120,8 +120,11 @@ func (f *store) run() {
 }
 
 // This function is meant to run concurrently.
-func (f *store) fetchAndEnqueue(userid db.ID) {
-	calendarInstance, err := f.fetch(userid)
+func (f *store) fetchAndEnqueue(ctx context.Context, userid db.ID) {
+	ctx, cancel := context.WithTimeout(ctx, f.lifetime)
+	defer cancel()
+
+	calendarInstance, err := f.fetch(ctx, userid)
 
 	if err == nil {
 		f.updateQueue <- CalendarInstance{
@@ -198,16 +201,12 @@ func (f *store) handleSyncError(error CalendarSyncError) {
 	f.cache[error.userID] = entry
 }
 
-func (f *store) fetch(userid db.ID) (*ics.Calendar, error) {
-	const timeout = 4 * time.Minute
+func (f *store) fetch(ctx context.Context, userid db.ID) (*ics.Calendar, error) {
 	const databaseTimeoutNextRetry = 5 * time.Second
 
 	f.lock.Lock()
 	f.cache[userid].syncOptions.syncing = true
 	f.lock.Unlock()
-
-	ctx, cancel := context.WithTimeout(f.ctx, timeout)
-	defer cancel()
 
 	user, err := f.database.GetUser(ctx, userid)
 	if err != nil {
@@ -215,7 +214,7 @@ func (f *store) fetch(userid db.ID) (*ics.Calendar, error) {
 	}
 
 	writeUser := func() error {
-		wctx, wcancel := context.WithTimeout(context.Background(), databaseTimeoutNextRetry)
+		wctx, wcancel := context.WithTimeout(ctx, databaseTimeoutNextRetry)
 		defer wcancel()
 		return f.database.WriteUser(wctx, user)
 	}
