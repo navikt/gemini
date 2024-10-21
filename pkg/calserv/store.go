@@ -40,8 +40,6 @@ type store struct {
 type CalendarInstance struct {
 	userID   db.ID
 	calendar ics.Calendar
-	//startSyncTime time.Time
-	//endSyncTime   time.Time
 }
 
 type CalendarSyncError struct {

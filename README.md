@@ -10,12 +10,15 @@ Gemini is a workaround for this.
 
 ## How does it work?
 
-Go to https://gemini.nais.io and log in with your Microsoft Azure credentials.
-Gemini will keep your access and refresh token in a database, and synchronize the calendar at regular intervals.
+Go to https://gemini.external.prod-gcp.nav.cloud.nais.io and log in with your Microsoft Azure credentials
+to activate calendar syncing.
+
+Gemini will synchronize the calendar at regular intervals.
+
 You will get a personal calendar URL that looks like this:
 
-`https://gemini.nais.io/calendar/<SECRETKEY>`
+`https://gemini.external.prod-gcp.nav.cloud.nais.io/calendar/<SECRETKEY>`
 
 This URL returns your default calendar in iCalendar format. You can "subscribe" to this URL in your favorite calendar application.
 
-Refreshing your calendar does not trigger calls to Azure. Thus, you can refresh the calendar as often as you like.
+You can refresh your calendar as often as you like. Internally, the calendar is synced every hour.
