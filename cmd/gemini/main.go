@@ -28,7 +28,7 @@ func main() {
 }
 
 const syncInterval = time.Minute
-const lifetime = time.Hour
+const lifetime = 30 * time.Minute // cache calendars for this amount of time before fetching them again
 
 func run() error {
 	log.SetLevel(log.TraceLevel)

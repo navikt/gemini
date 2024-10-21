@@ -22,4 +22,4 @@ You will get a personal calendar URL that looks like this:
 
 This URL returns your default calendar in iCalendar format. You can "subscribe" to this URL in your favorite calendar application.
 
-You can refresh your calendar as often as you like. Internally, the calendar is synced every hour.
+You can refresh your calendar as often as you like. Internally, the calendar is synced every thirty minutes.
