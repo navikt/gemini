@@ -298,7 +298,7 @@ func (f *store) Add(user *db.User) {
 
 func (f *store) userCount() (active, inactive int) {
 	for _, calendarInstance := range f.cache {
-		if calendarInstance == nil || calendarInstance.currentVersion == nil {
+		if calendarInstance == nil {
 			inactive++
 			continue
 		}
