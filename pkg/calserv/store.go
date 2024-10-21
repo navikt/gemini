@@ -94,20 +94,24 @@ func (f *store) run() {
 			log.Debugf("Store shutting down")
 			return
 
+		// Check if any calendars need syncing.
 		case <-f.timer.C:
 			f.timer.Reset(f.interval)
 			f.fetchOutdated()
 
+		// Calendars that have been fetched end up here.
 		case calendarInstance := <-f.updateQueue:
 			f.store(calendarInstance)
 			jobs--
 
+		// Any errors during syncing must be handled.
 		case syncError := <-f.errorQueue:
 			f.handleSyncError(syncError)
 			jobs--
 
 		// Fetch calendars and put the results on a queue.
-		// This takes a long time, and may run concurrently.
+		// This takes a long time due to Azure API iowait,
+		// so we may run concurrently.
 		case userid := <-f.fetchQueue:
 			jobs++
 			go f.fetchAndEnqueue(userid)
