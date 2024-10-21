@@ -50,9 +50,10 @@ func run() error {
 		return fmt.Errorf("configuration error: %w", err)
 	}
 
+	log.Infof("Connecting to database...")
 	database, err := setupDatabase(cfg.DatabaseURL)
 	if err != nil {
-		return err
+		return fmt.Errorf("connect to database: %w", err)
 	}
 
 	log.Infof("Database connection ready.")
