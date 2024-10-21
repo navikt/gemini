@@ -165,6 +165,7 @@ func (f *store) store(instance CalendarInstance) {
 	now := time.Now()
 	entry.currentVersion = &instance
 	entry.syncOptions.err = nil
+	entry.syncOptions.syncing = false
 	entry.syncOptions.lastSync = now
 	entry.syncOptions.lastSuccess = now
 	entry.syncOptions.nextSync = now.Add(f.lifetime)
@@ -183,6 +184,7 @@ func (f *store) handleSyncError(error CalendarSyncError) {
 	now := time.Now()
 	entry.syncOptions.err = error.err
 	entry.syncOptions.lastSync = now
+	entry.syncOptions.syncing = false
 
 	if errors.Is(error.err, ErrCredentialsExpired) {
 		// disable syncing users with expired credentials
