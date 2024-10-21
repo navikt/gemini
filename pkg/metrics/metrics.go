@@ -49,6 +49,7 @@ var (
 			Help:      "number of calendar synchronizations made",
 			Namespace: namespace,
 			Subsystem: subsystem,
+			Buckets:   prometheus.ExponentialBucketsRange(1.0, 4.0*60, 11), // buckets from 1sec to 4min
 		},
 		[]string{
 			LabelStatus,
