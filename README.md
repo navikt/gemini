@@ -1,6 +1,7 @@
-# gemini
+# ♊ Gemini
 
-Gemini maintains an in-memory and up to date copy of your Office365 calendar, and exports it in iCalendar format through a secret URL.
+Gemini maintains an in-memory and up-to-date copy of your Office365 calendar.
+A stripped-down version is exported in iCalendar format through a secret URL that is available on the Internet.
 
 ## Why?
 
