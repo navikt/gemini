@@ -266,18 +266,27 @@ func (f *store) fetch(userid db.ID) (*ics.Calendar, error) {
 func (f *store) Add(user *db.User) {
 	f.lock.Lock()
 	defer f.lock.Unlock()
+
 	if f.cache[user.ID] != nil {
 		return
 	}
 
-	f.cache[user.ID] = &CalendarCache{}
+	f.cache[user.ID] = &CalendarCache{
+		currentVersion: nil,
+		syncOptions: SynchronizationOptions{
+			nextSync: time.Now(),
+		},
+	}
 
 	if user.Token != nil && len(user.Token.AccessToken) > 0 {
 		log.Infof("Calendar for %s is now monitored", user.Username)
-		f.fetchQueue <- user.ID
 	} else {
+		f.cache[user.ID].syncOptions.disabled = true
 		log.Warnf("Calendar for %s is not monitored due to missing credentials", user.Username)
 	}
+
+	// Schedule next sync now
+	f.timer.Reset(1 * time.Second)
 
 	active, inactive := f.userCount()
 	metrics.Users(active, inactive)
