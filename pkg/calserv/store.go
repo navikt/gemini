@@ -54,6 +54,8 @@ var ErrCredentialsExpired = fmt.Errorf("credentials no longer valid, please re-a
 // Metadata required to sync at certain intervals
 type SynchronizationOptions struct {
 	err         error
+	syncing     bool
+	disabled    bool
 	lastSync    time.Time
 	lastSuccess time.Time
 	nextSync    time.Time
@@ -141,10 +143,9 @@ func (f *store) fetchOutdated() {
 		if f.cache[i].syncOptions.nextSync.After(time.Now()) {
 			continue
 		}
-		if f.cache[i].syncOptions.nextSync.Unix() == 0 {
+		if f.cache[i].syncOptions.syncing || f.cache[i].syncOptions.disabled {
 			continue
 		}
-		f.cache[i].syncOptions.nextSync = time.Time{}
 		f.fetchQueue <- i
 		queued++
 	}
@@ -185,7 +186,7 @@ func (f *store) handleSyncError(error CalendarSyncError) {
 
 	if errors.Is(error.err, ErrCredentialsExpired) {
 		// disable syncing users with expired credentials
-		entry.syncOptions.nextSync = time.Time{}
+		entry.syncOptions.disabled = true
 	} else {
 		entry.syncOptions.nextSync = now.Add(retryInterval)
 	}
@@ -196,6 +197,10 @@ func (f *store) handleSyncError(error CalendarSyncError) {
 func (f *store) fetch(userid db.ID) (*ics.Calendar, error) {
 	const timeout = 4 * time.Minute
 	const databaseTimeoutNextRetry = 5 * time.Second
+
+	f.lock.Lock()
+	f.cache[userid].syncOptions.syncing = true
+	f.lock.Unlock()
 
 	ctx, cancel := context.WithTimeout(f.ctx, timeout)
 	defer cancel()
@@ -284,7 +289,7 @@ func (f *store) userCount() (active, inactive int) {
 			inactive++
 			continue
 		}
-		if calendarInstance.syncOptions.nextSync.Unix() == 0 {
+		if calendarInstance.syncOptions.disabled {
 			inactive++
 		} else {
 			active++
