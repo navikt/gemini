@@ -84,41 +84,40 @@ func NewStore(ctx context.Context, database db.Database, oauth *oauth2.Config, i
 }
 
 func (f *store) run() {
+	jobs := 0
+
 	for {
 		select {
 		case <-f.ctx.Done():
 			log.Debugf("Store shutting down")
 			return
+
 		case <-f.timer.C:
 			f.timer.Reset(f.interval)
-			if len(f.fetchQueue) > 0 {
-				// skip adding items to queue if queue has any items
-				continue
-			}
 			f.fetchOutdated()
 
 		case calendarInstance := <-f.updateQueue:
 			f.store(calendarInstance)
+			jobs--
 
 		case syncError := <-f.errorQueue:
 			f.handleSyncError(syncError)
+			jobs--
 
 		// Fetch calendars and put the results on a queue.
 		// This takes a long time, and may run concurrently.
 		case userid := <-f.fetchQueue:
-			metrics.QueueSize(len(f.fetchQueue))
+			jobs++
 			go f.fetchAndEnqueue(userid)
 		}
+
+		metrics.QueueSize(jobs)
 	}
 }
 
 // This function is meant to run concurrently.
 func (f *store) fetchAndEnqueue(userid db.ID) {
-	startTime := time.Now()
 	calendarInstance, err := f.fetch(userid)
-	elapsedTime := time.Since(startTime)
-
-	_ = elapsedTime // for usage in metrics later on
 
 	if err == nil {
 		f.updateQueue <- CalendarInstance{
@@ -131,27 +130,28 @@ func (f *store) fetchAndEnqueue(userid db.ID) {
 			err:    err,
 		}
 	}
-
-	metrics.QueueSize(len(f.fetchQueue))
 }
 
 func (f *store) fetchOutdated() {
-	queued := 0
 	f.lock.Lock()
 	defer f.lock.Unlock()
-	log.Debugf("Queueing all calendars for synchronization...")
+	queued := 0
+
 	for i := range f.cache {
 		if f.cache[i].syncOptions.nextSync.After(time.Now()) {
+			continue
+		}
+		if f.cache[i].syncOptions.nextSync.Unix() == 0 {
 			continue
 		}
 		f.cache[i].syncOptions.nextSync = time.Time{}
 		f.fetchQueue <- i
 		queued++
 	}
+
 	active, inactive := f.userCount()
 	metrics.Users(active, inactive)
-	metrics.QueueSize(len(f.fetchQueue))
-	log.Debugf("All eligible calendars queued for synchronization (total of %d, vs %d active and %d inactive users).", queued, active, inactive)
+	log.Debugf("Eligible calendars queued for synchronization (total of %d, vs %d active and %d inactive users).", queued, active, inactive)
 }
 
 // Store a user's calendar in the cache.
@@ -217,9 +217,10 @@ func (f *store) fetch(userid db.ID) (*ics.Calendar, error) {
 	client := oauth2.NewClient(ctx, src)
 
 	log.Infof("Synchronizing calendar for user %s", user.Username)
-	events, err := azure.GetCalendarEvents(client)
 
-	metrics.Synchronizations(err)
+	t := time.Now()
+	events, err := azure.GetCalendarEvents(client)
+	metrics.Synchronizations(t, err)
 
 	if err != nil {
 		// check for expired credentials
@@ -236,6 +237,8 @@ func (f *store) fetch(userid db.ID) (*ics.Calendar, error) {
 
 		return nil, err
 	}
+
+	log.Infof("Calendar synchronization for user %s finished in %s", user.Username, time.Since(t))
 
 	user.Token, err = src.Token()
 	if err == nil && oldAccessToken != user.Token.AccessToken {

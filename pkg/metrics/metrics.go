@@ -43,10 +43,10 @@ var (
 		},
 	)
 
-	synchronizations = prometheus.NewCounterVec(
-		prometheus.CounterOpts{
+	synchronizations = prometheus.NewHistogramVec(
+		prometheus.HistogramOpts{
 			Name:      "synchronizations",
-			Help:      "number of managed users",
+			Help:      "number of calendar synchronizations made",
 			Namespace: namespace,
 			Subsystem: subsystem,
 		},
@@ -103,10 +103,11 @@ func statusLabel(err error) string {
 	return StatusError
 }
 
-func Synchronizations(err error) {
+func Synchronizations(t time.Time, err error) {
+	elapsed := time.Since(t)
 	synchronizations.With(prometheus.Labels{
 		LabelStatus: statusLabel(err),
-	}).Inc()
+	}).Observe(elapsed.Seconds())
 }
 
 func Users(active, inactive int) {
