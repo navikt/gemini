@@ -43,5 +43,5 @@ func NewID() (ID, error) {
 
 func (id ID) Public() string {
 	sum := sha256.Sum256([]byte(id))
-	return string(sum[:])
+	return base64.URLEncoding.EncodeToString(sum[:])
 }
