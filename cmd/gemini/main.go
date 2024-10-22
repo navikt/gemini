@@ -31,7 +31,7 @@ const syncInterval = time.Minute
 const lifetime = 30 * time.Minute // cache calendars for this amount of time before fetching them again
 
 func run() error {
-	log.SetLevel(log.TraceLevel)
+	log.SetLevel(log.InfoLevel)
 	log.Infof("GEMINI %s", version.Version())
 
 	bt, err := version.BuildTime()
