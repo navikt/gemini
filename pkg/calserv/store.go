@@ -19,6 +19,7 @@ import (
 type Store interface {
 	Add(user *db.User)
 	Get(userid db.ID) *CalendarCache
+	GetPublic(publicID string) *ics.Calendar
 }
 
 // Asynchronous calendar fetcher.
@@ -38,8 +39,9 @@ type store struct {
 
 // A single instance of a converted calendar
 type CalendarInstance struct {
-	userID   db.ID
-	calendar ics.Calendar
+	userID         db.ID
+	secretCalendar ics.Calendar
+	publicCalendar ics.Calendar
 }
 
 type CalendarSyncError struct {
@@ -127,10 +129,7 @@ func (f *store) fetchAndEnqueue(ctx context.Context, userid db.ID) {
 	calendarInstance, err := f.fetch(ctx, userid)
 
 	if err == nil {
-		f.updateQueue <- CalendarInstance{
-			userID:   userid,
-			calendar: *calendarInstance,
-		}
+		f.updateQueue <- *calendarInstance
 	} else {
 		f.errorQueue <- CalendarSyncError{
 			userID: userid,
@@ -201,7 +200,7 @@ func (f *store) handleSyncError(error CalendarSyncError) {
 	f.cache[error.userID] = entry
 }
 
-func (f *store) fetch(ctx context.Context, userid db.ID) (*ics.Calendar, error) {
+func (f *store) fetch(ctx context.Context, userid db.ID) (*CalendarInstance, error) {
 	const databaseTimeoutNextRetry = 5 * time.Second
 
 	f.lock.Lock()
@@ -258,12 +257,17 @@ func (f *store) fetch(ctx context.Context, userid db.ID) (*ics.Calendar, error) 
 		return nil, err
 	}
 
-	now := time.Now()
-	cal := Calendar(events)
-	cal.SetLastModified(now)
-	cal.SetName(user.Username)
+	cal := Calendar(events, Convert)
+	publicCal := Calendar(events, ConvertPublic)
 
-	return cal, nil
+	cal.SetName(user.Username)
+	publicCal.SetName(user.Username)
+
+	return &CalendarInstance{
+		userID:         user.ID,
+		secretCalendar: *cal,
+		publicCalendar: *publicCal,
+	}, nil
 }
 
 func (f *store) Add(user *db.User) {
@@ -312,4 +316,24 @@ func (f *store) userCount() (active, inactive int) {
 
 func (f *store) Get(userid db.ID) *CalendarCache {
 	return f.cache[userid]
+}
+
+func (f *store) userIDFromPublic(publicID string) *db.ID {
+	for userID := range f.cache {
+		if userID.Public() == publicID {
+			return &userID
+		}
+	}
+	return nil
+}
+
+func (f *store) GetPublic(publicID string) *ics.Calendar {
+	userID := f.userIDFromPublic(publicID)
+	if userID == nil {
+		return nil
+	}
+	if f.cache[*userID] == nil {
+		return nil
+	}
+	return &f.cache[*userID].currentVersion.publicCalendar
 }

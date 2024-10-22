@@ -135,6 +135,7 @@ func setupRouter(srv *calserv.Server, auth *authserv.Server, validator func(http
 	})
 
 	r.HandleFunc("/calendar/{userid}", srv.Calendar)
+	r.HandleFunc("/public/{publicid}", srv.PublicCalendar)
 
 	return r
 }

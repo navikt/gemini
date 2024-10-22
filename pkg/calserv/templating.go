@@ -11,7 +11,9 @@ import (
 type TemplateParameters struct {
 	Authenticated bool
 	UserID        string
+	PublicID      string
 	Size          int
+	PublicSize    int
 	Disabled      bool
 	NextSync      time.Time
 	LastSync      time.Time

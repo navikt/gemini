@@ -73,7 +73,20 @@
     Lenken er personlig, del den ikke med andre.
 </p>
 
+<h2>Offentlig kalender</h2>
+<p>
+    Denne kalenderen kan deles med andre, er tiltenkt til bruk av folk utenfor Nav,
+    og inneholder kun data om når du er tilgjengelig eller ikke.
+    Fungerer på samme måte som lenken over.
+</p>
+<p>
+    Kopier lenken:
+    <a href="/public/{{ .PublicID }}" onclick="alert('Kalenderen skal ikke lastes ned. Les dokumentasjonen.'); return false;">offentlig kalender-abonnement</a>
+    <em>(ICS, {{ .PublicSize }} bytes)</em>
+</p>
+
 {{ if .Error }}
+<h2>Synkronisering</h2>
 <p>
     FEIL: {{ .Error }}
 </p>
@@ -89,6 +102,7 @@
 </p>
 {{ end }}
 
+<h2>Synkronisering</h2>
 <p>
     Sist synkronisert: {{ .LastSuccess }}
 </p>

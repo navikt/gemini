@@ -3,6 +3,7 @@ package calserv
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	ics "github.com/arran4/golang-ical"
 
@@ -14,10 +15,10 @@ const almostRFCTime = "20060102T150405"
 const tz = "/Europe/Oslo"
 const geminiEmoji = "♊"
 
-func Calendar(events []azure.Event) *ics.Calendar {
+func Calendar(events []azure.Event, converter func(azure.Event) *ics.VEvent) *ics.Calendar {
 	cal := ics.NewCalendar()
 
-	cal.SetName("NAV")
+	cal.SetName("Nav")
 	cal.SetTzid(tz)
 
 	// Product identifier is supposed to say whose software made this file.
@@ -27,10 +28,40 @@ func Calendar(events []azure.Event) *ics.Calendar {
 	cal.SetProductId(fmt.Sprintf("-//nais.io//NONSGML Gemini %s//EN", version.Version()))
 
 	for _, ev := range events {
-		cal.AddVEvent(Convert(ev))
+		cal.AddVEvent(converter(ev))
 	}
 
+	cal.SetLastModified(time.Now())
+
 	return cal
+}
+
+// Convert an Azure event to an ICS event, but strip all information
+// and replace it with a generic "busy".
+func ConvertPublic(event azure.Event) *ics.VEvent {
+	e := ics.NewEvent(event.Id)
+	tz := &ics.KeyValues{
+		Key:   "TZID",
+		Value: []string{tz},
+	}
+
+	e.SetSummary("Opptatt")
+
+	if event.IsAllDay {
+		e.SetAllDayStartAt(event.Start.Time(), tz)
+		e.SetAllDayEndAt(event.End.Time(), tz)
+	} else {
+		e.SetProperty(ics.ComponentPropertyDtStart, event.Start.Time().Local().Format(almostRFCTime), tz)
+		e.SetProperty(ics.ComponentPropertyDtEnd, event.End.Time().Local().Format(almostRFCTime), tz)
+	}
+
+	// TODO: do we want tentative or unanswered events to pop up in the public calendar?
+	if event.ResponseStatus.Response == azure.ResponseStatusNotResponded {
+	}
+
+	setRecurrence(event, e)
+
+	return e
 }
 
 func Convert(event azure.Event) *ics.VEvent {

@@ -3,6 +3,7 @@ package db
 import (
 	"context"
 	"crypto/rand"
+	"crypto/sha256"
 	"encoding/base64"
 	"errors"
 	"io"
@@ -38,4 +39,9 @@ func NewID() (ID, error) {
 		return "", err
 	}
 	return ID(base64.URLEncoding.EncodeToString(buf)), nil
+}
+
+func (id ID) Public() string {
+	sum := sha256.Sum256([]byte(id))
+	return string(sum[:])
 }

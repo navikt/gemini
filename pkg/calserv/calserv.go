@@ -38,7 +38,8 @@ func (s *Server) Index(w http.ResponseWriter, r *http.Request) {
 
 		calendarInstance := s.store.Get(user.ID)
 		if calendarInstance != nil && calendarInstance.currentVersion != nil {
-			templateParams.Size = len([]byte(calendarInstance.currentVersion.calendar.Serialize()))
+			templateParams.Size = len([]byte(calendarInstance.currentVersion.secretCalendar.Serialize()))
+			templateParams.PublicSize = len([]byte(calendarInstance.currentVersion.publicCalendar.Serialize()))
 			templateParams.NextSync = calendarInstance.syncOptions.nextSync.Truncate(time.Second)
 			templateParams.LastSync = calendarInstance.syncOptions.lastSync.Truncate(time.Second)
 			templateParams.LastSuccess = calendarInstance.syncOptions.lastSuccess.Truncate(time.Second)
@@ -50,6 +51,7 @@ func (s *Server) Index(w http.ResponseWriter, r *http.Request) {
 
 		templateParams.Authenticated = true
 		templateParams.UserID = string(user.ID)
+		templateParams.PublicID = user.ID.Public()
 	}
 
 	err := tpl.Execute(w, templateParams)
@@ -62,6 +64,26 @@ func (s *Server) SetCalendar(userid db.ID, calendar *CalendarCache) {
 	s.calendars[userid] = calendar
 }
 
+// Serve a user's public calendar with only busy/free information.
+func (s *Server) PublicCalendar(w http.ResponseWriter, r *http.Request) {
+	publicID := chi.URLParam(r, "publicid")
+	calendar := s.store.GetPublic(publicID)
+	if calendar == nil {
+		w.WriteHeader(http.StatusServiceUnavailable)
+		_, _ = fmt.Fprintf(w, "Calendar is not yet synchronized, please wait a few minutes.")
+		return
+	}
+
+	payload := []byte(calendar.Serialize())
+	w.Header().Set("Content-Length", strconv.Itoa(len(payload)))
+	w.Header().Set("Content-Type", "text/calendar")
+	w.Header().Set("Cache-Control", "no-cache")
+	w.WriteHeader(http.StatusOK)
+
+	_, _ = w.Write(payload)
+}
+
+// Serve a user's secret calendar with all info intact.
 func (s *Server) Calendar(w http.ResponseWriter, r *http.Request) {
 	requestStart := time.Now()
 
@@ -91,7 +113,7 @@ func (s *Server) Calendar(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	payload := []byte(calendarInstance.currentVersion.calendar.Serialize())
+	payload := []byte(calendarInstance.currentVersion.secretCalendar.Serialize())
 	w.Header().Set("Content-Length", strconv.Itoa(len(payload)))
 	w.Header().Set("Content-Type", "text/calendar")
 	w.Header().Set("Cache-Control", "no-cache")
