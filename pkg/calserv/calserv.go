@@ -126,6 +126,18 @@ func (s *Server) Calendar(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if calendarInstance.syncOptions.disabled {
+		msg := "Your calendar is unavailable due to missing credentials. Please log in to Gemini again. For help, see #gemini on Slack."
+		payload := []byte(ErrorCalendarWeek(msg).Serialize())
+		w.Header().Set("Content-Length", strconv.Itoa(len(payload)))
+		w.Header().Set("Content-Type", "text/calendar")
+		w.Header().Set("Cache-Control", "no-cache")
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write(payload)
+		metrics.Request(requestStart, CalendarPrivate, false)
+		return
+	}
+
 	if calendarInstance.syncOptions.err != nil {
 		log.Errorf("user's calendar is unavailable due to: %s", calendarInstance.syncOptions.err)
 		w.WriteHeader(http.StatusServiceUnavailable)

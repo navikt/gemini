@@ -2,6 +2,8 @@ package calserv
 
 import (
 	"fmt"
+	"math/rand"
+	"strconv"
 	"strings"
 	"time"
 
@@ -15,7 +17,15 @@ const almostRFCTime = "20060102T150405"
 const tz = "/Europe/Oslo"
 const geminiEmoji = "♊"
 
-func Calendar(events []azure.Event, converter func(azure.Event) *ics.VEvent) *ics.Calendar {
+func AzureCalendar(events []azure.Event, converter func(azure.Event) *ics.VEvent) *ics.Calendar {
+	icsEvents := make([]*ics.VEvent, 0, len(events))
+	for _, ev := range events {
+		icsEvents = append(icsEvents, converter(ev))
+	}
+	return Calendar(icsEvents)
+}
+
+func Calendar(events []*ics.VEvent) *ics.Calendar {
 	cal := ics.NewCalendar()
 
 	cal.SetName("Nav")
@@ -28,7 +38,7 @@ func Calendar(events []azure.Event, converter func(azure.Event) *ics.VEvent) *ic
 	cal.SetProductId(fmt.Sprintf("-//nais.io//NONSGML Gemini %s//EN", version.Version()))
 
 	for _, ev := range events {
-		cal.AddVEvent(converter(ev))
+		cal.AddVEvent(ev)
 	}
 
 	cal.SetLastModified(time.Now())
@@ -40,7 +50,7 @@ func Calendar(events []azure.Event, converter func(azure.Event) *ics.VEvent) *ic
 // and replace it with a generic "busy".
 func ConvertPublic(event azure.Event) *ics.VEvent {
 	e := ics.NewEvent(event.Id)
-	tz := &ics.KeyValues{
+	timezone := &ics.KeyValues{
 		Key:   "TZID",
 		Value: []string{tz},
 	}
@@ -48,11 +58,11 @@ func ConvertPublic(event azure.Event) *ics.VEvent {
 	e.SetSummary("Opptatt")
 
 	if event.IsAllDay {
-		e.SetAllDayStartAt(event.Start.Time(), tz)
-		e.SetAllDayEndAt(event.End.Time(), tz)
+		e.SetAllDayStartAt(event.Start.Time(), timezone)
+		e.SetAllDayEndAt(event.End.Time(), timezone)
 	} else {
-		e.SetProperty(ics.ComponentPropertyDtStart, event.Start.Time().Local().Format(almostRFCTime), tz)
-		e.SetProperty(ics.ComponentPropertyDtEnd, event.End.Time().Local().Format(almostRFCTime), tz)
+		e.SetProperty(ics.ComponentPropertyDtStart, event.Start.Time().Local().Format(almostRFCTime), timezone)
+		e.SetProperty(ics.ComponentPropertyDtEnd, event.End.Time().Local().Format(almostRFCTime), timezone)
 	}
 
 	// TODO: do we want tentative or unanswered events to pop up in the public calendar?
@@ -64,9 +74,60 @@ func ConvertPublic(event azure.Event) *ics.VEvent {
 	return e
 }
 
+// Generate a calendar that shows the associated error message
+// every day during core working hours (0900-1430).
+func ErrorCalendarWeek(msg string) *ics.Calendar {
+	// Find midnight of today
+	cursor := time.Now().Local()
+	cursor = time.Date(
+		cursor.Year(),
+		cursor.Month(),
+		cursor.Day(),
+		0, 0, 0, 0,
+		time.Now().Location(),
+	)
+
+	// Travel back in time to find this week's Monday
+	for cursor.Weekday() != time.Monday {
+		cursor = cursor.Add(-24 * time.Hour)
+	}
+
+	// By now we should have reached Monday.
+	icsEvents := make([]*ics.VEvent, 0, 5)
+	i := 5
+	for i > 0 {
+		icsEvents = append(icsEvents, ErrorMessage(msg, cursor))
+		cursor = cursor.Add(24 * time.Hour)
+		i--
+	}
+
+	return Calendar(icsEvents)
+}
+
+func ErrorMessage(msg string, date time.Time) *ics.VEvent {
+	e := ics.NewEvent(strconv.Itoa(rand.Int()))
+	timezone := &ics.KeyValues{
+		Key:   "TZID",
+		Value: []string{tz},
+	}
+
+	date = date.Local()
+	start := date.Truncate(time.Hour).Add(9 * time.Hour)
+	end := date.Truncate(time.Hour).Add(14 * time.Hour).Add(30 * time.Minute)
+
+	e.SetProperty(ics.ComponentPropertyDtStart, start.Format(almostRFCTime), timezone)
+	e.SetProperty(ics.ComponentPropertyDtEnd, end.Format(almostRFCTime), timezone)
+
+	e.SetOrganizer("Gemini")
+	e.SetSummary(msg)
+	e.SetDescription(fmt.Sprintf("Gemini cannot sync your calendar due to the following error:\n\n%s", msg))
+
+	return e
+}
+
 func Convert(event azure.Event) *ics.VEvent {
 	e := ics.NewEvent(event.Id)
-	tz := &ics.KeyValues{
+	timezone := &ics.KeyValues{
 		Key:   "TZID",
 		Value: []string{tz},
 	}
@@ -74,11 +135,11 @@ func Convert(event azure.Event) *ics.VEvent {
 	e.SetSummary(event.Subject)
 
 	if event.IsAllDay {
-		e.SetAllDayStartAt(event.Start.Time(), tz)
-		e.SetAllDayEndAt(event.End.Time(), tz)
+		e.SetAllDayStartAt(event.Start.Time(), timezone)
+		e.SetAllDayEndAt(event.End.Time(), timezone)
 	} else {
-		e.SetProperty(ics.ComponentPropertyDtStart, event.Start.Time().Local().Format(almostRFCTime), tz)
-		e.SetProperty(ics.ComponentPropertyDtEnd, event.End.Time().Local().Format(almostRFCTime), tz)
+		e.SetProperty(ics.ComponentPropertyDtStart, event.Start.Time().Local().Format(almostRFCTime), timezone)
+		e.SetProperty(ics.ComponentPropertyDtEnd, event.End.Time().Local().Format(almostRFCTime), timezone)
 	}
 
 	description := ""

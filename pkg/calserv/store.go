@@ -257,8 +257,8 @@ func (f *store) fetch(ctx context.Context, userid db.ID) (*CalendarInstance, err
 		return nil, err
 	}
 
-	cal := Calendar(events, Convert)
-	publicCal := Calendar(events, ConvertPublic)
+	cal := AzureCalendar(events, Convert)
+	publicCal := AzureCalendar(events, ConvertPublic)
 
 	cal.SetName(user.Username)
 	publicCal.SetName(user.Username)
