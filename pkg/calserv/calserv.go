@@ -19,20 +19,40 @@ const (
 )
 
 type Server struct {
-	calendars map[db.ID]*CalendarCache
-	database  db.Database
-	store     Store
+	calendars   map[db.ID]*CalendarCache
+	lastRequest map[string]time.Time // when was this calendar last requested?
+	database    db.Database
+	store       Store
 }
 
 func NewServer(database db.Database, store Store) *Server {
-	return &Server{
-		calendars: make(map[db.ID]*CalendarCache),
-		database:  database,
-		store:     store,
+	srv := &Server{
+		calendars:   make(map[db.ID]*CalendarCache),
+		lastRequest: make(map[string]time.Time),
+		database:    database,
+		store:       store,
 	}
+	go srv.reportMetrics(30 * time.Second)
+	return srv
 }
 
-// This page is what the user sees.
+// Update the "calendars currently in use" gauge.
+// Run this as a Goroutine.
+func (s *Server) reportMetrics(interval time.Duration) {
+	inUse := 0
+	t := time.NewTicker(interval)
+	for range t.C {
+		then := time.Now().Add(-24 * time.Hour)
+		for _, lastRequestTime := range s.lastRequest {
+			if lastRequestTime.After(then) {
+				inUse++
+			}
+		}
+	}
+	metrics.CalendarsInUse(inUse)
+}
+
+// This page is what the user sees when they log in.
 func (s *Server) Index(w http.ResponseWriter, r *http.Request) {
 	templateParams := &TemplateParameters{}
 
@@ -65,10 +85,6 @@ func (s *Server) Index(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (s *Server) SetCalendar(userid db.ID, calendar *CalendarCache) {
-	s.calendars[userid] = calendar
-}
-
 // Serve a user's public calendar with only busy/free information.
 func (s *Server) PublicCalendar(w http.ResponseWriter, r *http.Request) {
 	requestStart := time.Now()
@@ -81,6 +97,8 @@ func (s *Server) PublicCalendar(w http.ResponseWriter, r *http.Request) {
 		metrics.Request(requestStart, CalendarPublic, false)
 		return
 	}
+
+	s.lastRequest[publicID] = time.Now()
 
 	payload := []byte(calendar.Serialize())
 	w.Header().Set("Content-Length", strconv.Itoa(len(payload)))
@@ -122,6 +140,8 @@ func (s *Server) Calendar(w http.ResponseWriter, r *http.Request) {
 		metrics.Request(requestStart, CalendarPrivate, false)
 		return
 	}
+
+	s.lastRequest[string(userID)] = time.Now()
 
 	payload := []byte(calendarInstance.currentVersion.secretCalendar.Serialize())
 	w.Header().Set("Content-Length", strconv.Itoa(len(payload)))

@@ -45,6 +45,15 @@ var (
 		},
 	)
 
+	calendarsInUse = prometheus.NewGauge(
+		prometheus.GaugeOpts{
+			Name:      "calendars_in_use",
+			Help:      "number of calendars recently used by their URL",
+			Namespace: namespace,
+			Subsystem: subsystem,
+		},
+	)
+
 	synchronizations = prometheus.NewHistogramVec(
 		prometheus.HistogramOpts{
 			Name:      "synchronizations",
@@ -91,6 +100,7 @@ func init() {
 	prometheus.MustRegister(requests)
 	prometheus.MustRegister(synchronizations)
 	prometheus.MustRegister(databaseQueries)
+	prometheus.MustRegister(calendarsInUse)
 
 	synchronizations.With(prometheus.Labels{
 		LabelStatus: StatusOK,
@@ -133,6 +143,10 @@ func DatabaseQuery(t time.Time, err error) {
 
 func QueueSize(length int) {
 	queueSize.Set(float64(length))
+}
+
+func CalendarsInUse(inUse int) {
+	calendarsInUse.Set(float64(inUse))
 }
 
 func Request(t time.Time, calendarName string, success bool) {
