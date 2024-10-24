@@ -19,6 +19,8 @@ const (
 	LabelStatus = "status"
 	StatusOK    = "ok"
 	StatusError = "error"
+
+	LabelCalendar = "calendar"
 )
 
 var (
@@ -65,6 +67,7 @@ var (
 		},
 		[]string{
 			LabelStatus,
+			LabelCalendar,
 		},
 	)
 
@@ -132,11 +135,11 @@ func QueueSize(length int) {
 	queueSize.Set(float64(length))
 }
 
-func Request(t time.Time, success bool) {
+func Request(t time.Time, calendarName string, success bool) {
 	duration := time.Since(t)
 	if success {
-		requests.WithLabelValues(StatusOK).Observe(duration.Seconds())
+		requests.WithLabelValues(StatusOK, calendarName).Observe(duration.Seconds())
 	} else {
-		requests.WithLabelValues(StatusError).Observe(duration.Seconds())
+		requests.WithLabelValues(StatusError, calendarName).Observe(duration.Seconds())
 	}
 }

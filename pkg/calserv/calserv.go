@@ -13,6 +13,11 @@ import (
 	"github.com/nais/gemini/pkg/db"
 )
 
+const (
+	CalendarPrivate = "private"
+	CalendarPublic  = "public"
+)
+
 type Server struct {
 	calendars map[db.ID]*CalendarCache
 	database  db.Database
@@ -66,11 +71,14 @@ func (s *Server) SetCalendar(userid db.ID, calendar *CalendarCache) {
 
 // Serve a user's public calendar with only busy/free information.
 func (s *Server) PublicCalendar(w http.ResponseWriter, r *http.Request) {
+	requestStart := time.Now()
+
 	publicID := chi.URLParam(r, "publicid")
 	calendar := s.store.GetPublic(publicID)
 	if calendar == nil {
 		w.WriteHeader(http.StatusServiceUnavailable)
 		_, _ = fmt.Fprintf(w, "Calendar is not yet synchronized, please wait a few minutes.")
+		metrics.Request(requestStart, CalendarPublic, false)
 		return
 	}
 
@@ -81,6 +89,8 @@ func (s *Server) PublicCalendar(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 
 	_, _ = w.Write(payload)
+
+	metrics.Request(requestStart, CalendarPublic, true)
 }
 
 // Serve a user's secret calendar with all info intact.
@@ -94,7 +104,7 @@ func (s *Server) Calendar(w http.ResponseWriter, r *http.Request) {
 	if calendarInstance == nil {
 		w.WriteHeader(http.StatusNotFound)
 		_, _ = fmt.Fprintf(w, "Calendar does not exist. Please go to the index page and get your personal calendar URL.")
-		metrics.Request(requestStart, false)
+		metrics.Request(requestStart, CalendarPrivate, false)
 		return
 	}
 
@@ -102,14 +112,14 @@ func (s *Server) Calendar(w http.ResponseWriter, r *http.Request) {
 		log.Errorf("user's calendar is unavailable due to: %s", calendarInstance.syncOptions.err)
 		w.WriteHeader(http.StatusServiceUnavailable)
 		_, _ = fmt.Fprintf(w, "calendar is unavailable: %s", calendarInstance.syncOptions.err)
-		metrics.Request(requestStart, false)
+		metrics.Request(requestStart, CalendarPrivate, false)
 		return
 	}
 
 	if calendarInstance.currentVersion == nil {
 		w.WriteHeader(http.StatusServiceUnavailable)
 		_, _ = fmt.Fprintf(w, "Calendar is not yet synchronized, please wait a few minutes.")
-		metrics.Request(requestStart, false)
+		metrics.Request(requestStart, CalendarPrivate, false)
 		return
 	}
 
@@ -121,5 +131,5 @@ func (s *Server) Calendar(w http.ResponseWriter, r *http.Request) {
 
 	_, err := w.Write(payload)
 
-	metrics.Request(requestStart, err == nil)
+	metrics.Request(requestStart, CalendarPrivate, err == nil)
 }
