@@ -39,17 +39,17 @@ func NewServer(database db.Database, store Store) *Server {
 // Update the "calendars currently in use" gauge.
 // Run this as a Goroutine.
 func (s *Server) reportMetrics(interval time.Duration) {
-	inUse := 0
 	t := time.NewTicker(interval)
 	for range t.C {
+		inUse := 0
 		then := time.Now().Add(-24 * time.Hour)
 		for _, lastRequestTime := range s.lastRequest {
 			if lastRequestTime.After(then) {
 				inUse++
 			}
 		}
+		metrics.CalendarsInUse(inUse)
 	}
-	metrics.CalendarsInUse(inUse)
 }
 
 // This page is what the user sees when they log in.
