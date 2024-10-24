@@ -46,10 +46,10 @@ var (
 	synchronizations = prometheus.NewHistogramVec(
 		prometheus.HistogramOpts{
 			Name:      "synchronizations",
-			Help:      "number of calendar synchronizations made",
+			Help:      "time to synchronize calendars",
 			Namespace: namespace,
 			Subsystem: subsystem,
-			Buckets:   prometheus.LinearBuckets(0.0, 5.0, 12), // five-second intervals up to a minute
+			Buckets:   prometheus.LinearBuckets(0.0, 5.0, 24), // five-second intervals up to two minutes
 		},
 		[]string{
 			LabelStatus,

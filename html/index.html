@@ -49,23 +49,53 @@
 <body>
 
 <h1>♊ Gemini</h1>
-
 <p>
     Gemini lager en kopi av din Microsoft-kalender i <em>iCalendar</em>-format
     slik at du kan bruke den kalender-riggen du selv vil.
 </p>
 
 <p>
-    <a href="https://github.com/navikt/gemini">Bygget</a> av Nais med <code>+kjærlighet +sikkerhet -microsoft -otp</code>
+    <a href="https://github.com/navikt/gemini">Bygget</a> av Nais.
+    Kom innom vår kanal på Slack for de siste nyhetene om Gemini,
+    eller for å gi tilbakemelding:
+    <a href="https://nav-it.slack.com/archives/C07GXQEBC7J">#gemini</a>
 </p>
 
 {{ if .Authenticated }}
-<h2>Din kalender</h2>
-<p>
-    Kopier lenken:
-    <a href="/calendar/{{ .UserID }}" onclick="alert('Kalenderen skal ikke lastes ned. Les dokumentasjonen.'); return false;">mitt kalender-abonnement</a>
-    <em>(ICS, {{ .Size }} bytes)</em>
-</p>
+<h2>Kalender</h2>
+<table>
+    <thead>
+        <tr>
+            <th>Kalender</th>
+            <th>Beskrivelse</th>
+            <th>Størrelse</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>
+                <a href="/calendar/{{ .UserID }}"
+                   onclick="alert('Kalenderen skal ikke lastes ned. Les dokumentasjonen.'); return false;"
+                >Min jobb-kalender</a>
+            </td>
+            <td>
+                Hemmelig link til din kalender. Inneholder tittel, beskrivelse og deltakerliste.
+                Del aldri linken med andre.
+            </td>
+            <td>{{ .Size }} bytes</td>
+        </tr>
+        <tr>
+            <td>
+                <a href="/calendar/{{ .PublicID }}"
+                   onclick="alert('Kalenderen skal ikke lastes ned. Les dokumentasjonen.'); return false;"
+                >Offentlig kalender</a>
+            </td>
+            <td>Kan deles med andre, også utenfor Nav. Inneholder kun tidspunkt for når du er opptatt.</td>
+            <td>{{ .PublicSize }} bytes</td>
+        </tr>
+    </tbody>
+</table>
+
 <p>
     Legg lenken inn i din kalender-app som en <em>subscription</em>.
     Filen må ikke lastes ned og importeres, ellers
@@ -73,48 +103,57 @@
     Lenken er personlig, del den ikke med andre.
 </p>
 
-<h2>Offentlig kalender</h2>
-<p>
-    Denne kalenderen kan deles med andre, er tiltenkt til bruk av folk utenfor Nav,
-    og inneholder kun data om når du er tilgjengelig eller ikke.
-    Fungerer på samme måte som lenken over.
-</p>
-<p>
-    Kopier lenken:
-    <a href="/public/{{ .PublicID }}" onclick="alert('Kalenderen skal ikke lastes ned. Les dokumentasjonen.'); return false;">offentlig kalender-abonnement</a>
-    <em>(ICS, {{ .PublicSize }} bytes)</em>
-</p>
-
-{{ if .Error }}
 <h2>Synkronisering</h2>
-<p>
-    FEIL: {{ .Error }}
-</p>
-<p>
-    Feilen oppstod: {{ .LastSync }}
-</p>
-{{ end }}
-
-{{ if .Disabled }}
-<p>
-    Kalenderen din blir ikke lengre synkronisert, antakelig fordi tokenet har utløpt.
-    Prøv å <a href="/oauth2/logout">logge ut</a> og deretter inn igjen.
-</p>
-{{ end }}
-
-<h2>Synkronisering</h2>
-<p>
-    Sist synkronisert: {{ .LastSuccess }}
-</p>
-
-<p>
-    Neste synkronisering: {{ .NextSync }}
-</p>
-
-<p>
-    Hvis kalenderen ikke vil synkronisere kan det hende tokenet er utgått, da kan du <a href="/oauth2/logout">logge ut</a> og prøve å logge inn igjen.
-</p>
-
+<table>
+    <thead>
+        <tr>
+            <th>Status</th>
+            <th>Hendelse</th>
+            <th>Tidspunkt</th>
+        </tr>
+    </thead>
+    <tbody>
+        {{ if .Disabled }}
+            <tr>
+                <td>❌</td>
+                <td>
+                    Synkronisering er ikke aktivert for din kalender.
+                    Tokenet er utløpt. Prøv å <a href="/oauth2/logout">logge ut</a> og deretter inn igjen.
+                </td>
+                <td>{{ .LastSync }}</td>
+            </tr>
+        {{ else }}
+            {{ if .Error }}
+                <tr>
+                    <td>❌</td>
+                    <td>Forsøkt synkronisert</td>
+                    <td>{{ .LastSync }}</td>
+                </tr>
+                <tr>
+                    <td>🔄</td>
+                    <td>Neste forsøk</td>
+                    <td>{{ .NextSync }}</td>
+                </tr>
+                <tr>
+                    <td>✅</td>
+                    <td>Sist synkronisert</td>
+                    <td>{{ .LastSuccess }}</td>
+                </tr>
+            {{ else }}
+                <tr>
+                    <td>✅</td>
+                    <td>Synkronisert</td>
+                    <td>{{ .LastSuccess }}</td>
+                </tr>
+                <tr>
+                    <td>🔄</td>
+                    <td>Neste synkronisering</td>
+                    <td>{{ .NextSync }}</td>
+                </tr>
+            {{ end }}
+        {{ end }}
+    </tbody>
+</table>
 {{ end }}
 
 <h2>Slik funker det</h2>
@@ -130,9 +169,12 @@
     Møter og invitasjoner er <em>read-only</em>.
     Vedlegg fjernes.
     Varslinger fjernes.
+
     Endringer og
     <abbr title="répondez s'il vous plaît">RSVP</abbr> krever at man bruker
-    Outlook eller web-kalenderen.
+    Outlook eller web-kalenderen. Det blir indikert i beskrivelsen hvorvidt
+    du har svart på innkallingen eller ikke.
+
     I det minste kan du se kalenderen på telefonen din uten å være innrullert.
     Eller integrere den med Google-kalender, eller Linux, eller nesten hva som helst.
     Mulighetene er mange.
