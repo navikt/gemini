@@ -106,6 +106,10 @@
     Lenken er personlig, del den ikke med andre.
 </p>
 
+<p>
+    Ferdig? <a href="/oauth2/logout">Logg ut</a>?
+</p>
+
 <h2>Synkronisering</h2>
 <table>
     <thead>
@@ -121,6 +125,10 @@
                 <td>❌</td>
                 <td>{{ .Error }}</td>
                 <td>{{ .LastSync }}</td>
+            </tr>
+            <tr>
+                <td>ℹ️</td>
+                <td colspan="2">Feil kan ofte rettes ved å <a href="/oauth2/logout">logge ut</a> og logge inn igjen.</td>
             </tr>
             <tr>
                 <td>🔄</td>

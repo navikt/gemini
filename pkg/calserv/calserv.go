@@ -62,9 +62,14 @@ func (s *Server) Index(w http.ResponseWriter, r *http.Request) {
 		s.store.Add(user)
 
 		calendarInstance := s.store.Get(user.ID)
-		if calendarInstance != nil && calendarInstance.currentVersion != nil {
-			templateParams.Size = len([]byte(calendarInstance.currentVersion.secretCalendar.Serialize()))
-			templateParams.PublicSize = len([]byte(calendarInstance.currentVersion.publicCalendar.Serialize()))
+		if calendarInstance != nil {
+			if calendarInstance.currentVersion != nil {
+				templateParams.Size = len([]byte(calendarInstance.currentVersion.secretCalendar.Serialize()))
+				templateParams.PublicSize = len([]byte(calendarInstance.currentVersion.publicCalendar.Serialize()))
+			} else {
+				templateParams.Error = "Venter på å bli synkronisert..."
+			}
+
 			templateParams.NextSync = calendarInstance.syncOptions.nextSync.Truncate(time.Second)
 			templateParams.LastSync = calendarInstance.syncOptions.lastSync.Truncate(time.Second)
 			templateParams.LastSuccess = calendarInstance.syncOptions.lastSuccess.Truncate(time.Second)
@@ -72,11 +77,10 @@ func (s *Server) Index(w http.ResponseWriter, r *http.Request) {
 			if calendarInstance.syncOptions.err != nil {
 				templateParams.Error = calendarInstance.syncOptions.err.Error()
 			}
+			templateParams.Authenticated = true
+			templateParams.UserID = string(user.ID)
+			templateParams.PublicID = user.ID.Public()
 		}
-
-		templateParams.Authenticated = true
-		templateParams.UserID = string(user.ID)
-		templateParams.PublicID = user.ID.Public()
 	}
 
 	err := tpl.Execute(w, templateParams)

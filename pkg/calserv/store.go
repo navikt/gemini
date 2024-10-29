@@ -291,6 +291,7 @@ func (f *store) Add(user *db.User) {
 		log.Infof("Calendar for %s is now monitored", user.Username)
 	} else {
 		f.cache[user.ID].syncOptions.disabled = true
+		f.cache[user.ID].syncOptions.err = ErrCredentialsExpired
 		log.Warnf("Calendar for %s is not monitored due to missing credentials", user.Username)
 	}
 
