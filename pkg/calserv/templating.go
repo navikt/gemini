@@ -18,6 +18,7 @@ type TemplateParameters struct {
 	NextSync      time.Time
 	LastSync      time.Time
 	LastSuccess   time.Time
+	HasSuccess    bool
 	Error         string
 }
 

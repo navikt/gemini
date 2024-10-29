@@ -135,11 +135,13 @@
                 <td>Neste forsøk</td>
                 <td>{{ .NextSync }}</td>
             </tr>
-            <tr>
-                <td>✅</td>
-                <td>Sist synkronisert</td>
-                <td>{{ .LastSuccess }}</td>
-            </tr>
+            {{ if .HasSuccess }}
+                <tr>
+                    <td>✅</td>
+                    <td>Sist synkronisert</td>
+                    <td>{{ .LastSuccess }}</td>
+                </tr>
+            {{ end }}
         {{ else }}
             <tr>
                 <td>✅</td>

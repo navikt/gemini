@@ -73,6 +73,7 @@ func (s *Server) Index(w http.ResponseWriter, r *http.Request) {
 			templateParams.NextSync = calendarInstance.syncOptions.nextSync.Truncate(time.Second)
 			templateParams.LastSync = calendarInstance.syncOptions.lastSync.Truncate(time.Second)
 			templateParams.LastSuccess = calendarInstance.syncOptions.lastSuccess.Truncate(time.Second)
+			templateParams.HasSuccess = !calendarInstance.syncOptions.lastSuccess.IsZero()
 			templateParams.Disabled = calendarInstance.syncOptions.disabled
 			if calendarInstance.syncOptions.err != nil {
 				templateParams.Error = calendarInstance.syncOptions.err.Error()
