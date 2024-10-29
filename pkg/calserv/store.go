@@ -274,17 +274,17 @@ func (f *store) Add(user *db.User) {
 	f.lock.Lock()
 	defer f.lock.Unlock()
 
-	if f.cache[user.ID] != nil {
+	if f.cache[user.ID] != nil && f.cache[user.ID].syncOptions.disabled {
+		// User re-logins or requests the index page
 		f.cache[user.ID].syncOptions.disabled = false
 		f.cache[user.ID].syncOptions.nextSync = time.Now()
-		return
-	}
-
-	f.cache[user.ID] = &CalendarCache{
-		currentVersion: nil,
-		syncOptions: SynchronizationOptions{
-			nextSync: time.Now(),
-		},
+	} else {
+		f.cache[user.ID] = &CalendarCache{
+			currentVersion: nil,
+			syncOptions: SynchronizationOptions{
+				nextSync: time.Now(),
+			},
+		}
 	}
 
 	if user.Token != nil && len(user.Token.AccessToken) > 0 {
@@ -334,7 +334,7 @@ func (f *store) GetPublic(publicID string) *ics.Calendar {
 	if userID == nil {
 		return nil
 	}
-	if f.cache[*userID] == nil {
+	if f.cache[*userID] == nil || f.cache[*userID].currentVersion == nil {
 		return nil
 	}
 	return &f.cache[*userID].currentVersion.publicCalendar

@@ -116,44 +116,33 @@
         </tr>
     </thead>
     <tbody>
-        {{ if .Disabled }}
+        {{ if .Error }}
             <tr>
                 <td>❌</td>
-                <td>
-                    Synkronisering er ikke aktivert for din kalender.
-                    Tokenet er utløpt. Prøv å <a href="/oauth2/logout">logge ut</a> og deretter inn igjen.
-                </td>
+                <td>{{ .Error }}</td>
                 <td>{{ .LastSync }}</td>
             </tr>
+            <tr>
+                <td>🔄</td>
+                <td>Neste forsøk</td>
+                <td>{{ .NextSync }}</td>
+            </tr>
+            <tr>
+                <td>✅</td>
+                <td>Sist synkronisert</td>
+                <td>{{ .LastSuccess }}</td>
+            </tr>
         {{ else }}
-            {{ if .Error }}
-                <tr>
-                    <td>❌</td>
-                    <td>Forsøkt synkronisert</td>
-                    <td>{{ .LastSync }}</td>
-                </tr>
-                <tr>
-                    <td>🔄</td>
-                    <td>Neste forsøk</td>
-                    <td>{{ .NextSync }}</td>
-                </tr>
-                <tr>
-                    <td>✅</td>
-                    <td>Sist synkronisert</td>
-                    <td>{{ .LastSuccess }}</td>
-                </tr>
-            {{ else }}
-                <tr>
-                    <td>✅</td>
-                    <td>Synkronisert</td>
-                    <td>{{ .LastSuccess }}</td>
-                </tr>
-                <tr>
-                    <td>🔄</td>
-                    <td>Neste synkronisering</td>
-                    <td>{{ .NextSync }}</td>
-                </tr>
-            {{ end }}
+            <tr>
+                <td>✅</td>
+                <td>Synkronisert</td>
+                <td>{{ .LastSuccess }}</td>
+            </tr>
+            <tr>
+                <td>🔄</td>
+                <td>Neste synkronisering</td>
+                <td>{{ .NextSync }}</td>
+            </tr>
         {{ end }}
     </tbody>
 </table>
