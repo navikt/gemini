@@ -68,7 +68,7 @@ func (s *Server) Index(w http.ResponseWriter, r *http.Request) {
 			templateParams.NextSync = calendarInstance.syncOptions.nextSync.Truncate(time.Second)
 			templateParams.LastSync = calendarInstance.syncOptions.lastSync.Truncate(time.Second)
 			templateParams.LastSuccess = calendarInstance.syncOptions.lastSuccess.Truncate(time.Second)
-			templateParams.Disabled = calendarInstance.syncOptions.nextSync.Unix() == 0
+			templateParams.Disabled = calendarInstance.syncOptions.disabled
 			if calendarInstance.syncOptions.err != nil {
 				templateParams.Error = calendarInstance.syncOptions.err.Error()
 			}
@@ -139,7 +139,7 @@ func (s *Server) Calendar(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if calendarInstance.syncOptions.err != nil {
-		log.Errorf("user's calendar is unavailable due to: %s", calendarInstance.syncOptions.err)
+		log.Errorf("user's calendar is unavailable due to: %+v", calendarInstance.syncOptions.err)
 		w.WriteHeader(http.StatusServiceUnavailable)
 		_, _ = fmt.Fprintf(w, "calendar is unavailable: %s", calendarInstance.syncOptions.err)
 		metrics.Request(requestStart, CalendarPrivate, false)

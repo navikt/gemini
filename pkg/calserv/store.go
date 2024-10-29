@@ -275,6 +275,8 @@ func (f *store) Add(user *db.User) {
 	defer f.lock.Unlock()
 
 	if f.cache[user.ID] != nil {
+		f.cache[user.ID].syncOptions.disabled = false
+		f.cache[user.ID].syncOptions.nextSync = time.Now()
 		return
 	}
 
