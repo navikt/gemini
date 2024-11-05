@@ -90,9 +90,10 @@ func run() error {
 	for ctx.Err() == nil {
 		select {
 		case <-ctx.Done():
-			break
+			log.Infof("main context canceled; shutting down...")
+			return nil
 		case sig := <-sigs:
-			log.Infof("received signal %s; shutting down...", sig)
+			log.Infof("received signal %s", sig)
 			cancel()
 		}
 	}

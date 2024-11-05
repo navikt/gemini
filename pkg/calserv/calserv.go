@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/go-chi/chi"
+	"github.com/nais/gemini/pkg/authserv"
 	"github.com/nais/gemini/pkg/metrics"
 	log "github.com/sirupsen/logrus"
 
@@ -56,7 +57,7 @@ func (s *Server) reportMetrics(interval time.Duration) {
 func (s *Server) Index(w http.ResponseWriter, r *http.Request) {
 	templateParams := &TemplateParameters{}
 
-	user, _ := r.Context().Value("user").(*db.User)
+	user, _ := r.Context().Value(authserv.UserContextKey).(*db.User)
 	if user != nil {
 		// register user with calendar async fetcher
 		s.store.Add(user)

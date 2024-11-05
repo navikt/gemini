@@ -33,7 +33,7 @@ func SessionIDMiddleware(database db.Database) func(next http.Handler) http.Hand
 			}
 
 			ctx := r.Context()
-			ctx = context.WithValue(ctx, "user", user)
+			ctx = context.WithValue(ctx, UserContextKey, user)
 
 			next.ServeHTTP(w, r.WithContext(ctx))
 		}

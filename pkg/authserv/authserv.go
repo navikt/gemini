@@ -24,6 +24,12 @@ type Server struct {
 	database db.Database
 }
 
+type contextKey struct {
+	Key string
+}
+
+var UserContextKey = contextKey{Key: "user"}
+
 func NewServer(cfg *oauth2.Config, audience string, database db.Database) *Server {
 	return &Server{
 		cfg:      cfg,
