@@ -38,6 +38,10 @@ spec:
       type: POSTGRES_12
   ingresses:
   - https://gemini.external.prod-gcp.nav.cloud.nais.io
+  observability:
+    logging:
+      destinations:
+        - id: loki
   port: 3000
   prometheus:
     enabled: true
