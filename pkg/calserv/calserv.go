@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"sync"
 	"time"
 
 	"github.com/go-chi/chi"
@@ -20,7 +21,7 @@ const (
 )
 
 type Server struct {
-	calendars   map[db.ID]*CalendarCache
+	lock        sync.RWMutex         // needed for last request to avoid concurrent writes
 	lastRequest map[string]time.Time // when was this calendar last requested?
 	database    db.Database
 	store       Store
@@ -28,7 +29,6 @@ type Server struct {
 
 func NewServer(database db.Database, store Store) *Server {
 	srv := &Server{
-		calendars:   make(map[db.ID]*CalendarCache),
 		lastRequest: make(map[string]time.Time),
 		database:    database,
 		store:       store,
@@ -40,6 +40,8 @@ func NewServer(database db.Database, store Store) *Server {
 // Update the "calendars currently in use" gauge.
 // Run this as a Goroutine.
 func (s *Server) reportMetrics(interval time.Duration) {
+	s.lock.RLock()
+	defer s.lock.RUnlock()
 	t := time.NewTicker(interval)
 	for range t.C {
 		inUse := 0
@@ -104,7 +106,9 @@ func (s *Server) PublicCalendar(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	s.lock.Lock()
 	s.lastRequest[publicID] = time.Now()
+	s.lock.Unlock()
 
 	payload := []byte(calendar.Serialize())
 	w.Header().Set("Content-Length", strconv.Itoa(len(payload)))
@@ -159,7 +163,9 @@ func (s *Server) Calendar(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	s.lock.Lock()
 	s.lastRequest[string(userID)] = time.Now()
+	s.lock.Unlock()
 
 	payload := []byte(calendarInstance.currentVersion.secretCalendar.Serialize())
 	w.Header().Set("Content-Length", strconv.Itoa(len(payload)))
