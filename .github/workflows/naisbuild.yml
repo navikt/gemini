@@ -1,4 +1,4 @@
-name: Gemini release pipeline
+name: Nais build test-pipeline
 
 on:
   push: {}
