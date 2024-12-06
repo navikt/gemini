@@ -1,0 +1,19 @@
+name: Gemini release pipeline
+
+on:
+  push: {}
+
+jobs:
+  build:
+    permissions:
+      contents: "read"
+      id-token: "write"
+    name: Build Docker container
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - uses: nais/build/actions/build@master
+      env:
+        RUST_LOG: debug
+        WORKLOAD_IDENTITY_POOL: ${{ secrets.NAIS_WORKLOAD_IDENTITY_PROVIDER }}
+        ACTION: release
