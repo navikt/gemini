@@ -8,12 +8,14 @@ jobs:
     permissions:
       contents: "read"
       id-token: "write"
-    name: Build Docker container
+    name: Run Nais build
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
-    - uses: nais/build/actions/build@master
-      env:
+    - env:
         RUST_LOG: debug
         WORKLOAD_IDENTITY_POOL: ${{ secrets.NAIS_WORKLOAD_IDENTITY_PROVIDER }}
-        ACTION: release
+      run: |
+        wget -O /usr/local/bin/nb https://github.com/nais/build/releases/download/v1/nb
+        chmod +x /usr/local/bin/nb
+        /usr/local/bin/nb release
