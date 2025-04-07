@@ -35,7 +35,7 @@ spec:
       highAvailability: false
       name: gemini
       tier: db-f1-micro
-      type: POSTGRES_13
+      type: POSTGRES_14
   ingresses:
   - https://gemini.external.prod-gcp.nav.cloud.nais.io
   observability:
