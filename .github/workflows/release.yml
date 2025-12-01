@@ -11,7 +11,7 @@ jobs:
     name: Build Docker container
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
     - name: Build and push Docker image
       uses: nais/docker-build-push@main
       id: docker-push
