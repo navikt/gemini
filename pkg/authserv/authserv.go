@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/lestrrat-go/jwx/jwt"
+	"github.com/lestrrat-go/jwx/v4/jwt"
 	log "github.com/sirupsen/logrus"
 	"golang.org/x/oauth2"
 
@@ -106,7 +106,7 @@ func (s *Server) Callback(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	username, ok := accessToken.Get("upn")
+	username, ok := accessToken.Field("upn")
 	if !ok {
 		http.Error(w, fmt.Sprintf("get username from token: %s", err), http.StatusUnauthorized)
 		return
