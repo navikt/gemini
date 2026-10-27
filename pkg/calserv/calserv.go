@@ -7,7 +7,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/go-chi/chi"
+	"github.com/go-chi/chi/v5"
 	"github.com/nais/gemini/pkg/authserv"
 	"github.com/nais/gemini/pkg/metrics"
 	log "github.com/sirupsen/logrus"
