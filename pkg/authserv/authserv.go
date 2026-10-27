@@ -100,7 +100,7 @@ func (s *Server) Callback(w http.ResponseWriter, r *http.Request) {
 	}
 	http.SetCookie(w, cookie)
 
-	accessToken, err := jwt.ParseString(token.AccessToken)
+	accessToken, err := jwt.ParseString(token.AccessToken, jwt.WithVerify(false))
 	if err != nil {
 		http.Error(w, fmt.Sprintf("parse access token: %s", err), http.StatusUnauthorized)
 		return
