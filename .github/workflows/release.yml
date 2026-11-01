@@ -20,7 +20,7 @@ jobs:
         project_id: ${{ vars.NAIS_MANAGEMENT_PROJECT_ID }}
         identity_provider: ${{ secrets.NAIS_WORKLOAD_IDENTITY_PROVIDER }}
     - name: Deploy to NAIS cluster
-      uses: nais/deploy/actions/deploy@v2
+      uses: nais/deploy/actions/deploy@v3
       if: github.ref == 'refs/heads/master'
       env:
         CLUSTER: prod-gcp
